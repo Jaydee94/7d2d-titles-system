@@ -234,16 +234,16 @@ The same `dotnet test` step runs automatically on every pull request via the CI 
 
 ---
 
-## Testing Locally
+## Testing Locally (Linux)
 
 These steps walk through a full local test cycle using a 7DTD dedicated server running on the same machine as your development environment.
 
 ### 1. Install the 7DTD Dedicated Server
 
-Use SteamCMD (Linux) or the Steam client (Windows) to install the **7 Days to Die Dedicated Server** (App ID 294420).
+Use SteamCMD to install the **7 Days to Die Dedicated Server** (App ID 294420).
 
 ```bash
-# Linux — anonymous SteamCMD download
+# Anonymous SteamCMD download
 steamcmd +force_install_dir /opt/7dtd \
          +login anonymous \
          +app_update 294420 validate \
@@ -287,17 +287,10 @@ Watch the console output for:
 
 Connect to the server console (telnet, Alloc's web-panel, etc.) and run:
 
-```bash
-# List all 30 rank tiers
+```
 rank
-
-# Check your own rank (replace with actual player name or entity ID)
 rank check YourSteamName
-
-# Instantly simulate 1,000 zombie kills for fast rank testing
 rank set YourSteamName 1000
-
-# View the in-game leaderboard
 rank top 10
 ```
 
@@ -318,6 +311,134 @@ Typical dev loop:
 ```
 
 ### 6. Confirm Rank Display In-Game
+
+After `rank set <player> <kills>`:
+- The player's name above their character model updates to `[ShortTitle] PlayerName`.
+- A global chat announcement is broadcast (if `AnnounceRankUp` is `true`).
+- Disconnect and reconnect to verify data persists across sessions.
+
+---
+
+## Testing Locally (Windows 11)
+
+These steps walk through the same test cycle on a Windows 11 machine using PowerShell and the Steam client.
+
+### Prerequisites
+
+- [.NET SDK 8+](https://dotnet.microsoft.com/download) installed
+- [Steam](https://store.steampowered.com/about/) installed (for the dedicated server tool)
+- The repository cloned locally (e.g. to `C:\dev\7d2d-titles-system`)
+
+### 1. Install the 7DTD Dedicated Server
+
+1. Open **Steam → Library → Tools** and search for **7 Days to Die Dedicated Server**.
+2. Install it. Steam places the server under a path like:
+   ```
+   C:\Program Files (x86)\Steam\steamapps\common\7 Days to Die Dedicated Server\
+   ```
+   Note this path — it is `<ServerRoot>` in the steps below.
+
+> **Tip:** You can also use [SteamCMD for Windows](https://developer.valvesoftware.com/wiki/SteamCMD) for a headless install:
+> ```powershell
+> steamcmd +force_install_dir "C:\7dtd" `
+>          +login anonymous `
+>          +app_update 294420 validate `
+>          +quit
+> ```
+
+### 2. Build the Mod
+
+Open **PowerShell** in the repository root and run:
+
+```powershell
+cd TitlesSystem
+dotnet build -p:GameRoot="C:\Program Files (x86)\Steam\steamapps\common\7 Days to Die Dedicated Server" -c Release
+```
+
+The compiled DLL is written to:
+```
+TitlesSystem\bin\Release\TitlesSystem.dll
+```
+
+> **If you don't have the game DLLs locally**, build using the CI stubs instead (no game installation required):
+> ```powershell
+> $env:GITHUB_ACTIONS = "true"
+> dotnet build TitlesSystem\TitlesSystem.csproj -c Release
+> ```
+
+### 3. Deploy the Mod
+
+Copy the mod files into the server's `Mods\` directory with PowerShell:
+
+```powershell
+$serverRoot = "C:\Program Files (x86)\Steam\steamapps\common\7 Days to Die Dedicated Server"
+$modDest    = "$serverRoot\Mods\TitlesSystem"
+
+New-Item -ItemType Directory -Force -Path "$modDest\Config" | Out-Null
+
+Copy-Item "TitlesSystem\bin\Release\TitlesSystem.dll" -Destination $modDest
+Copy-Item "TitlesSystem\ModInfo.xml"                  -Destination $modDest
+Copy-Item "TitlesSystem\Config\TitlesRanks.xml"       -Destination "$modDest\Config"
+```
+
+The resulting layout:
+
+```
+<ServerRoot>\Mods\TitlesSystem\
+├── ModInfo.xml
+├── TitlesSystem.dll
+└── Config\
+    └── TitlesRanks.xml
+```
+
+### 4. Start the Server and Verify the Mod Loads
+
+```powershell
+cd "C:\Program Files (x86)\Steam\steamapps\common\7 Days to Die Dedicated Server"
+.\StartDedicatedServer.bat
+```
+
+Watch the console window for:
+
+```
+[TitlesSystem] Initializing Titles System mod...
+[TitlesSystem] Loaded 30 ranks from ...\Config\TitlesRanks.xml
+[TitlesSystem] Harmony patches applied.
+[TitlesSystem] Titles System mod initialized successfully.
+```
+
+### 5. Test with Console Commands
+
+The server opens a console window on Windows. You can also connect via Telnet if enabled in `serverconfig.xml`. Run:
+
+```
+rank
+rank check YourSteamName
+rank set YourSteamName 1000
+rank top 10
+```
+
+### 6. Iterate Without Restarting the Server
+
+> The server **must be restarted** to pick up a rebuilt DLL. You can edit
+> `Config\TitlesRanks.xml` without recompiling — only a server restart is needed
+> to reload rank definitions.
+
+Typical dev loop on Windows:
+
+```powershell
+# 1. Edit source files in your editor
+# 2. Rebuild
+cd C:\dev\7d2d-titles-system\TitlesSystem
+dotnet build -p:GameRoot="C:\Program Files (x86)\Steam\steamapps\common\7 Days to Die Dedicated Server" -c Release
+# 3. Stop the dedicated server (close the window or Ctrl+C)
+# 4. Redeploy
+Copy-Item "bin\Release\TitlesSystem.dll" `
+    -Destination "C:\Program Files (x86)\Steam\steamapps\common\7 Days to Die Dedicated Server\Mods\TitlesSystem"
+# 5. Restart the server and test with 'rank set'
+```
+
+### 7. Confirm Rank Display In-Game
 
 After `rank set <player> <kills>`:
 - The player's name above their character model updates to `[ShortTitle] PlayerName`.
