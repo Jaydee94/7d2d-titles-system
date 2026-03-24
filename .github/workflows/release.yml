@@ -1,0 +1,109 @@
+name: Build and Release
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build and publish mod release
+    runs-on: ubuntu-latest
+
+    steps:
+      # -----------------------------------------------------------------------
+      # 1. Check out the repository
+      # -----------------------------------------------------------------------
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # -----------------------------------------------------------------------
+      # 2. Set up .NET (required to build the C# mod)
+      # -----------------------------------------------------------------------
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      # -----------------------------------------------------------------------
+      # 3. Read the mod version from ModInfo.xml
+      # -----------------------------------------------------------------------
+      - name: Read mod version
+        id: modversion
+        run: |
+          VERSION=$(grep -oP '(?<=value=")[^"]+' TitlesSystem/ModInfo.xml | sed -n '3p')
+          echo "VERSION=${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "Mod version: ${VERSION}"
+
+      # -----------------------------------------------------------------------
+      # 4. Build the mod
+      #    GITHUB_ACTIONS=true is set automatically; TitlesSystem.csproj uses
+      #    it to switch from local game DLL references to the CI stub project.
+      # -----------------------------------------------------------------------
+      - name: Build TitlesSystem
+        run: |
+          dotnet build TitlesSystem/TitlesSystem.csproj \
+            -c Release \
+            -p:OutputPath=bin/Release
+        working-directory: ${{ github.workspace }}
+
+      # -----------------------------------------------------------------------
+      # 5. Package the mod into a deployable zip
+      #    Structure mirrors what goes inside <ServerRoot>/Mods/TitlesSystem/
+      # -----------------------------------------------------------------------
+      - name: Package mod
+        run: |
+          MOD_VERSION="${{ steps.modversion.outputs.VERSION }}"
+          STAGING="staging/TitlesSystem"
+
+          mkdir -p "${STAGING}/Config"
+
+          cp TitlesSystem/ModInfo.xml                    "${STAGING}/"
+          cp TitlesSystem/Config/TitlesRanks.xml         "${STAGING}/Config/"
+          cp TitlesSystem/bin/Release/TitlesSystem.dll   "${STAGING}/"
+
+          cd staging
+          zip -r "../TitlesSystem-v${MOD_VERSION}.zip" TitlesSystem/
+          echo "Created TitlesSystem-v${MOD_VERSION}.zip"
+        working-directory: ${{ github.workspace }}
+
+      # -----------------------------------------------------------------------
+      # 6. Create (or update) the GitHub Release
+      #    Uses the built-in GitHub CLI — no third-party action required.
+      # -----------------------------------------------------------------------
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          MOD_VERSION="${{ steps.modversion.outputs.VERSION }}"
+          TAG="v${MOD_VERSION}"
+          ASSET="TitlesSystem-v${MOD_VERSION}.zip"
+
+          # Delete the tag and release if they already exist (re-release on re-push)
+          gh release delete "${TAG}" --yes 2>/dev/null || true
+          git push origin ":refs/tags/${TAG}"    2>/dev/null || true
+
+          gh release create "${TAG}" "${ASSET}" \
+            --title "TitlesSystem ${TAG}" \
+            --notes "## 7D2D Titles System ${TAG}
+
+          Automated release built from \`main\` — compatible with **7 Days to Die v2.5**.
+
+          ### Installation
+          1. Download \`${ASSET}\` and unzip it.
+          2. Copy the \`TitlesSystem/\` folder into your server's \`Mods/\` directory.
+          3. Restart the server.
+
+          ### What's inside
+          \`\`\`
+          TitlesSystem/
+          ├── ModInfo.xml
+          ├── TitlesSystem.dll
+          └── Config/
+              └── TitlesRanks.xml
+          \`\`\`
+
+          See the [README](https://github.com/${{ github.repository }}/blob/main/README.md) for full configuration and usage."

@@ -1,0 +1,49 @@
+name: CI
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build-and-test:
+    name: Build mod DLL and run unit tests
+    runs-on: ubuntu-latest
+
+    steps:
+      # -----------------------------------------------------------------------
+      # 1. Check out the repository
+      # -----------------------------------------------------------------------
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # -----------------------------------------------------------------------
+      # 2. Set up .NET
+      #    .NET 8 SDK builds both the net48 mod DLL and the net8.0 test project.
+      # -----------------------------------------------------------------------
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      # -----------------------------------------------------------------------
+      # 3. Build the mod
+      #    GITHUB_ACTIONS=true is set automatically; TitlesSystem.csproj uses
+      #    it to switch from local game DLL references to the CI stub project.
+      # -----------------------------------------------------------------------
+      - name: Build TitlesSystem
+        run: |
+          dotnet build TitlesSystem/TitlesSystem.csproj \
+            -c Release \
+            -p:OutputPath=bin/Release
+        working-directory: ${{ github.workspace }}
+
+      # -----------------------------------------------------------------------
+      # 4. Run unit tests
+      #    TitlesSystem.Tests links only pure-logic source files (RankCalculator,
+      #    RankDefinition, PlayerRankData) — no game stubs needed.
+      # -----------------------------------------------------------------------
+      - name: Run unit tests
+        run: dotnet test TitlesSystem.Tests/TitlesSystem.Tests.csproj --verbosity normal
+        working-directory: ${{ github.workspace }}
+

@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    TitlesRanks.xml - Rank and Title Definitions for the 7D2D Titles System
+    
+    Each <Rank> requires the following attributes:
+      kills       - Minimum zombie kills required to achieve this rank
+      title       - The full display title shown in rank-up announcements
+      shortTitle  - Abbreviated title displayed above the player model in-game
+    
+    Ranks MUST be ordered by ascending kill count.
+    The first rank (kills="0") is the default starting rank.
+-->
+<TitlesConfig>
+
+    <Settings>
+        <!-- Display the short rank title in brackets above the player's name in-game -->
+        <ShowRankInName value="true"/>
+
+        <!-- Broadcast a global server announcement when a player ranks up -->
+        <AnnounceRankUp value="true"/>
+
+        <!-- Save player rank data to disk every N minutes (0 = only on disconnect/event) -->
+        <AutoSaveIntervalMinutes value="5"/>
+    </Settings>
+
+    <Ranks>
+        <!-- Starter rank - everyone begins here -->
+        <Rank kills="0"     title="Freshly Irradiated Civilian"   shortTitle="Civilian"/>
+
+        <!-- Getting started -->
+        <Rank kills="5"     title="Dumpster Diver of Doom"        shortTitle="Diver"/>
+        <Rank kills="10"    title="Rusty Nail Enthusiast"         shortTitle="Rusty"/>
+        <Rank kills="20"    title="Can Opener Connoisseur"        shortTitle="CanOpener"/>
+        <Rank kills="35"    title="Tin Can Knight"                shortTitle="TinCan"/>
+
+        <!-- Beginner -->
+        <Rank kills="50"    title="Wandering Wastelander"         shortTitle="Wanderer"/>
+        <Rank kills="75"    title="Dead Road Drifter"             shortTitle="Drifter"/>
+        <Rank kills="100"   title="Scavenger of the Fallen"       shortTitle="Scavenger"/>
+        <Rank kills="130"   title="Junkyard Prophet"              shortTitle="Prophet"/>
+        <Rank kills="175"   title="Honorary Raider"               shortTitle="Raider"/>
+
+        <!-- Intermediate -->
+        <Rank kills="250"   title="Vault Door Kickboxer"          shortTitle="VaultKicker"/>
+        <Rank kills="300"   title="Bunker Buster"                 shortTitle="Buster"/>
+        <Rank kills="375"   title="Mutant Whisperer"              shortTitle="Whisperer"/>
+        <Rank kills="500"   title="The Last Shotgun Shell"        shortTitle="LastShell"/>
+        <Rank kills="600"   title="Bottle Cap Baron"              shortTitle="Baron"/>
+
+        <!-- Advanced -->
+        <Rank kills="750"   title="Duke of the Dead Lands"        shortTitle="Duke"/>
+        <Rank kills="1250"  title="Horde Night Headliner"         shortTitle="Headliner"/>
+        <Rank kills="1500"  title="Ghoul Trapper"                 shortTitle="Trapper"/>
+        <Rank kills="2000"  title="Ambassador of Annihilation"    shortTitle="Ambassador"/>
+
+        <!-- Expert -->
+        <Rank kills="3000"  title="Warlord of the Wasteland"      shortTitle="Warlord"/>
+        <Rank kills="3750"  title="Ironclad Wastelander"          shortTitle="Ironclad"/>
+        <Rank kills="4500"  title="Shepherd of the Apocalypse"    shortTitle="Shepherd"/>
+        <Rank kills="6000"  title="Post-Apocalyptic Saint"        shortTitle="Saint"/>
+        <Rank kills="7500"  title="The Undying Ghoul Hunter"      shortTitle="Undying"/>
+
+        <!-- Legend -->
+        <Rank kills="12500" title="Harbinger of the Final Horde"  shortTitle="Harbinger"/>
+        <Rank kills="18000" title="Nuclear Winter Survivor"       shortTitle="NukeSurvivor"/>
+        <Rank kills="25000" title="The Rad-Scorpion King"         shortTitle="RadKing"/>
+        <Rank kills="37500" title="Irradiated Overlord"           shortTitle="Overlord"/>
+
+        <!-- Mythical -->
+        <Rank kills="50000"  title="Chosen One of the Wasteland"  shortTitle="ChosenOne"/>
+        <Rank kills="100000" title="Last Hope of Humanity"        shortTitle="LastHope"/>
+    </Ranks>
+
+</TitlesConfig>
