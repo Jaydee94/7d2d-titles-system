@@ -1,0 +1,38 @@
+name: CI
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    name: Verify DLL compilation
+    runs-on: ubuntu-latest
+
+    steps:
+      # -----------------------------------------------------------------------
+      # 1. Check out the repository
+      # -----------------------------------------------------------------------
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # -----------------------------------------------------------------------
+      # 2. Set up .NET (required to build the C# mod)
+      # -----------------------------------------------------------------------
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '6.0.x'
+
+      # -----------------------------------------------------------------------
+      # 3. Build the mod
+      #    GITHUB_ACTIONS=true is set automatically; TitlesSystem.csproj uses
+      #    it to switch from local game DLL references to the CI stub project.
+      # -----------------------------------------------------------------------
+      - name: Build TitlesSystem
+        run: |
+          dotnet build TitlesSystem/TitlesSystem.csproj \
+            -c Release \
+            -p:OutputPath=bin/Release
+        working-directory: ${{ github.workspace }}
