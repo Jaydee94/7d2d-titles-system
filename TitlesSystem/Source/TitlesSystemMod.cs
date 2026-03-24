@@ -25,10 +25,21 @@ namespace TitlesSystem
                 // Initialize the rank manager with the mod's config directory
                 RankManager.Instance.Initialize(_modInstance.Path);
 
-                // Apply all Harmony patches in this assembly
+                // Apply Harmony patches for types that use [HarmonyPatch] attributes (e.g. EntityDeathPatch)
                 _harmony = new Harmony("com.jaydee94.titlesystem");
                 _harmony.PatchAll(Assembly.GetExecutingAssembly());
                 Log.Out("[TitlesSystem] Harmony patches applied.");
+
+                // Chat command intercept is registered manually to avoid type-load
+                // failures when the game engine iterates the assembly on startup.
+                try
+                {
+                    TitlesSystem.Patches.ChatCommandPatch.ApplyPatch(_harmony);
+                }
+                catch (Exception chatPatchEx)
+                {
+                    Log.Warning($"[TitlesSystem] Chat command intercept could not be applied: {chatPatchEx.Message}");
+                }
 
                 // Subscribe to game events
                 ModEvents.GameStartDone.RegisterHandler(OnGameStartDone);

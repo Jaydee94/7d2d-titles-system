@@ -8,28 +8,40 @@ namespace TitlesSystem.Patches
 {
     /// <summary>
     /// Intercepts player chat and routes rank commands through ConsoleCmdRank.
-    /// This covers server builds that do not auto-route chat text to console commands.
+    /// Registered manually via ApplyPatch (not via PatchAll) to avoid type-load
+    /// failures when the game engine scans the assembly on startup.
     /// </summary>
-    [HarmonyPatch]
     public static class ChatCommandPatch
     {
-        public static IEnumerable<MethodBase> TargetMethods()
+        /// <summary>
+        /// Called from TitlesSystemMod.InitMod to patch every matching
+        /// ChatMessageServer overload that exists in this server build.
+        /// </summary>
+        public static void ApplyPatch(Harmony harmony)
         {
-            Type gmType = typeof(GameManager);
-            foreach (var method in gmType.GetMethods(BindingFlags.Public | BindingFlags.Instance))
+            var prefixMethod = new HarmonyMethod(typeof(ChatCommandPatch), nameof(Prefix));
+            int count = 0;
+
+            foreach (var method in typeof(GameManager).GetMethods(BindingFlags.Public | BindingFlags.Instance))
             {
                 if (!string.Equals(method.Name, "ChatMessageServer", StringComparison.Ordinal)) continue;
 
-                var p = method.GetParameters();
+                ParameterInfo[] p = method.GetParameters();
                 if (p.Length != 7) continue;
                 if (p[0].ParameterType != typeof(ClientInfo)) continue;
                 if (p[3].ParameterType != typeof(string)) continue;
 
-                yield return method;
+                harmony.Patch(method, prefix: prefixMethod);
+                count++;
+                Log.Out($"[TitlesSystem] ChatCommandPatch: patched overload '{method}'");
             }
+
+            if (count == 0)
+                Log.Warning("[TitlesSystem] ChatCommandPatch: no compatible ChatMessageServer overload found — 'rank' in chat will not work.");
+            else
+                Log.Out($"[TitlesSystem] ChatCommandPatch applied to {count} overload(s).");
         }
 
-        [HarmonyPrefix]
         public static bool Prefix(object[] __args)
         {
             if (__args == null || __args.Length < 4) return true;
