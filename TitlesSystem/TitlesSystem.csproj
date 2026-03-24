@@ -32,7 +32,7 @@
     <ManagedDir>$(GameRoot)/7DaysToDie_Data/Managed</ManagedDir>
   </PropertyGroup>
 
-  <ItemGroup>
+  <ItemGroup Condition="'$(GITHUB_ACTIONS)' != 'true'">
     <Reference Include="Assembly-CSharp">
       <HintPath>$(ManagedDir)/Assembly-CSharp.dll</HintPath>
       <Private>False</Private>
@@ -49,6 +49,17 @@
       <HintPath>$(ManagedDir)/0Harmony.dll</HintPath>
       <Private>False</Private>
     </Reference>
+  </ItemGroup>
+
+  <!--
+    CI build: replace game DLLs with stub types + Harmony from NuGet.
+    The GITHUB_ACTIONS environment variable is set automatically in GitHub Actions.
+  -->
+  <ItemGroup Condition="'$(GITHUB_ACTIONS)' == 'true'">
+    <!-- Stub types that mirror the 7DTD game API (no real game installation needed) -->
+    <ProjectReference Include="../libs/Stubs/GameStubs.csproj" />
+    <!-- HarmonyLib from NuGet (replaces the game's bundled 0Harmony.dll) -->
+    <PackageReference Include="Lib.Harmony" Version="2.2.2" />
   </ItemGroup>
 
   <!--

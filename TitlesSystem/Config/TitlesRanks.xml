@@ -25,37 +25,50 @@
 
     <Ranks>
         <!-- Starter rank - everyone begins here -->
-        <Rank kills="0"      title="Freshly Irradiated Civilian"  shortTitle="Civilian"/>
+        <Rank kills="0"      title="Freshly Irradiated Civilian"   shortTitle="Civilian"/>
 
         <!-- Getting started -->
-        <Rank kills="10"     title="Dumpster Diver of Doom"       shortTitle="Diver"/>
-        <Rank kills="25"     title="Rusty Nail Enthusiast"        shortTitle="Rusty"/>
-        <Rank kills="50"     title="Can Opener Connoisseur"       shortTitle="CanOpener"/>
+        <Rank kills="10"     title="Dumpster Diver of Doom"        shortTitle="Diver"/>
+        <Rank kills="25"     title="Rusty Nail Enthusiast"         shortTitle="Rusty"/>
+        <Rank kills="50"     title="Can Opener Connoisseur"        shortTitle="CanOpener"/>
+        <Rank kills="75"     title="Tin Can Knight"                shortTitle="TinCan"/>
+
+        <!-- Beginner -->
+        <Rank kills="100"    title="Wandering Wastelander"         shortTitle="Wanderer"/>
+        <Rank kills="150"    title="Dead Road Drifter"             shortTitle="Drifter"/>
+        <Rank kills="200"    title="Scavenger of the Fallen"       shortTitle="Scavenger"/>
+        <Rank kills="275"    title="Junkyard Prophet"              shortTitle="Prophet"/>
+        <Rank kills="350"    title="Honorary Raider"               shortTitle="Raider"/>
 
         <!-- Intermediate -->
-        <Rank kills="100"    title="Wandering Wastelander"        shortTitle="Wanderer"/>
-        <Rank kills="200"    title="Scavenger of the Fallen"      shortTitle="Scavenger"/>
-        <Rank kills="350"    title="Honorary Raider"              shortTitle="Raider"/>
+        <Rank kills="500"    title="Vault Door Kickboxer"          shortTitle="VaultKicker"/>
+        <Rank kills="625"    title="Bunker Buster"                 shortTitle="Buster"/>
+        <Rank kills="750"    title="Mutant Whisperer"              shortTitle="Whisperer"/>
+        <Rank kills="1000"   title="The Last Shotgun Shell"        shortTitle="LastShell"/>
+        <Rank kills="1250"   title="Bottle Cap Baron"              shortTitle="Baron"/>
 
         <!-- Advanced -->
-        <Rank kills="500"    title="Vault Door Kickboxer"         shortTitle="VaultKicker"/>
-        <Rank kills="750"    title="Mutant Whisperer"             shortTitle="Whisperer"/>
-        <Rank kills="1000"   title="The Last Shotgun Shell"       shortTitle="LastShell"/>
+        <Rank kills="1500"   title="Duke of the Dead Lands"        shortTitle="Duke"/>
+        <Rank kills="2500"   title="Horde Night Headliner"         shortTitle="Headliner"/>
+        <Rank kills="3250"   title="Ghoul Trapper"                 shortTitle="Trapper"/>
+        <Rank kills="4000"   title="Ambassador of Annihilation"    shortTitle="Ambassador"/>
 
         <!-- Expert -->
-        <Rank kills="1500"   title="Duke of the Dead Lands"       shortTitle="Duke"/>
-        <Rank kills="2500"   title="Horde Night Headliner"        shortTitle="Headliner"/>
-        <Rank kills="4000"   title="Ambassador of Annihilation"   shortTitle="Ambassador"/>
+        <Rank kills="6000"   title="Warlord of the Wasteland"      shortTitle="Warlord"/>
+        <Rank kills="7500"   title="Ironclad Wastelander"          shortTitle="Ironclad"/>
+        <Rank kills="9000"   title="Shepherd of the Apocalypse"    shortTitle="Shepherd"/>
+        <Rank kills="12000"  title="Post-Apocalyptic Saint"        shortTitle="Saint"/>
+        <Rank kills="15000"  title="The Undying Ghoul Hunter"      shortTitle="Undying"/>
 
         <!-- Legend -->
-        <Rank kills="6000"   title="Warlord of the Wasteland"     shortTitle="Warlord"/>
-        <Rank kills="9000"   title="Shepherd of the Apocalypse"   shortTitle="Shepherd"/>
-        <Rank kills="15000"  title="The Undying Ghoul Hunter"     shortTitle="Undying"/>
+        <Rank kills="25000"  title="Harbinger of the Final Horde"  shortTitle="Harbinger"/>
+        <Rank kills="37500"  title="Nuclear Winter Survivor"       shortTitle="NukeSurvivor"/>
+        <Rank kills="50000"  title="The Rad-Scorpion King"         shortTitle="RadKing"/>
+        <Rank kills="75000"  title="Irradiated Overlord"           shortTitle="Overlord"/>
 
         <!-- Mythical -->
-        <Rank kills="25000"  title="Harbinger of the Final Horde" shortTitle="Harbinger"/>
-        <Rank kills="50000"  title="The Rad-Scorpion King"        shortTitle="RadKing"/>
-        <Rank kills="100000" title="Chosen One of the Wasteland"  shortTitle="ChosenOne"/>
+        <Rank kills="100000" title="Chosen One of the Wasteland"   shortTitle="ChosenOne"/>
+        <Rank kills="200000" title="Last Hope of Humanity"         shortTitle="LastHope"/>
     </Ranks>
 
 </TitlesConfig>

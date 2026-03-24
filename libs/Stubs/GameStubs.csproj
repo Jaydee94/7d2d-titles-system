@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    GameStubs — Minimal stub types that mirror the 7 Days to Die game API.
+
+    Purpose: allow TitlesSystem.csproj to compile in CI (GitHub Actions)
+    without requiring a local 7DTD installation.  The real game DLLs are
+    referenced when building locally; these stubs are used only in CI.
+
+    IMPORTANT: These types are compile-time only.  At runtime the game
+    loads its own assemblies, which shadow these stubs.
+  -->
+
+  <PropertyGroup>
+    <AssemblyName>GameStubs</AssemblyName>
+    <RootNamespace>GameStubs</RootNamespace>
+    <TargetFramework>net48</TargetFramework>
+    <LangVersion>7.3</LangVersion>
+    <Nullable>disable</Nullable>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <!-- Suppress warnings about members that exist but are never called -->
+    <NoWarn>CS0067;CS0414;CS0649</NoWarn>
+  </PropertyGroup>
+
+</Project>

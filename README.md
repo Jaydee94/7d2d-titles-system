@@ -1,18 +1,19 @@
 # 7D2D Titles System
 
-A **server-side** mod for **7 Days to Die** that introduces a nerdy, funny rank and titles system. Players earn ranks by slaying the undead horde. Rank titles are displayed above each player's model so everyone knows who the real zombie-slaying legend is.
+A **server-side** mod for **7 Days to Die** (v2.5) that introduces a funny, apocalyptic rank and titles system. Players earn ranks by slaying the undead horde. Rank titles are displayed above each player's model so everyone knows who the real wasteland legend is.
 
 ---
 
 ## Features
 
-- 🧟 **19 progressive ranks** based on zombie kills — from *Freshly Irradiated Civilian* to *Chosen One of the Wasteland*
+- 🧟 **30 progressive ranks** based on zombie kills — from *Freshly Irradiated Civilian* to *Last Hope of Humanity*
 - 🪧 **Name display** — short rank title shown in brackets above each player's model (`[Warlord] PlayerName`)
 - 📢 **Rank-up announcements** — global server chat notification when a player levels up
 - 💾 **Persistent data** — kill counts and ranks survive server restarts, stored per world save
 - 🛠️ **Admin commands** — check ranks, force-set kills, view a top-10 leaderboard
 - ⚙️ **Fully configurable** — add, remove, or rename ranks in `Config/TitlesRanks.xml` without recompiling
 - 🔒 **Server-side only** — no client-side installation required
+- 🚀 **Automated releases** — compiled mod is published as a GitHub Release on every merge to `main`
 
 ---
 
@@ -24,21 +25,32 @@ A **server-side** mod for **7 Days to Die** that introduces a nerdy, funny rank 
 | 2 | `Diver` | Dumpster Diver of Doom | 10 |
 | 3 | `Rusty` | Rusty Nail Enthusiast | 25 |
 | 4 | `CanOpener` | Can Opener Connoisseur | 50 |
-| 5 | `Wanderer` | Wandering Wastelander | 100 |
-| 6 | `Scavenger` | Scavenger of the Fallen | 200 |
-| 7 | `Raider` | Honorary Raider | 350 |
-| 8 | `VaultKicker` | Vault Door Kickboxer | 500 |
-| 9 | `Whisperer` | Mutant Whisperer | 750 |
-| 10 | `LastShell` | The Last Shotgun Shell | 1,000 |
-| 11 | `Duke` | Duke of the Dead Lands | 1,500 |
-| 12 | `Headliner` | Horde Night Headliner | 2,500 |
-| 13 | `Ambassador` | Ambassador of Annihilation | 4,000 |
-| 14 | `Warlord` | Warlord of the Wasteland | 6,000 |
-| 15 | `Shepherd` | Shepherd of the Apocalypse | 9,000 |
-| 16 | `Undying` | The Undying Ghoul Hunter | 15,000 |
-| 17 | `Harbinger` | Harbinger of the Final Horde | 25,000 |
-| 18 | `RadKing` | The Rad-Scorpion King | 50,000 |
-| 19 | `ChosenOne` | Chosen One of the Wasteland | 100,000 |
+| 5 | `TinCan` | Tin Can Knight | 75 |
+| 6 | `Wanderer` | Wandering Wastelander | 100 |
+| 7 | `Drifter` | Dead Road Drifter | 150 |
+| 8 | `Scavenger` | Scavenger of the Fallen | 200 |
+| 9 | `Prophet` | Junkyard Prophet | 275 |
+| 10 | `Raider` | Honorary Raider | 350 |
+| 11 | `VaultKicker` | Vault Door Kickboxer | 500 |
+| 12 | `Buster` | Bunker Buster | 625 |
+| 13 | `Whisperer` | Mutant Whisperer | 750 |
+| 14 | `LastShell` | The Last Shotgun Shell | 1,000 |
+| 15 | `Baron` | Bottle Cap Baron | 1,250 |
+| 16 | `Duke` | Duke of the Dead Lands | 1,500 |
+| 17 | `Headliner` | Horde Night Headliner | 2,500 |
+| 18 | `Trapper` | Ghoul Trapper | 3,250 |
+| 19 | `Ambassador` | Ambassador of Annihilation | 4,000 |
+| 20 | `Warlord` | Warlord of the Wasteland | 6,000 |
+| 21 | `Ironclad` | Ironclad Wastelander | 7,500 |
+| 22 | `Shepherd` | Shepherd of the Apocalypse | 9,000 |
+| 23 | `Saint` | Post-Apocalyptic Saint | 12,000 |
+| 24 | `Undying` | The Undying Ghoul Hunter | 15,000 |
+| 25 | `Harbinger` | Harbinger of the Final Horde | 25,000 |
+| 26 | `NukeSurvivor` | Nuclear Winter Survivor | 37,500 |
+| 27 | `RadKing` | The Rad-Scorpion King | 50,000 |
+| 28 | `Overlord` | Irradiated Overlord | 75,000 |
+| 29 | `ChosenOne` | Chosen One of the Wasteland | 100,000 |
+| 30 | `LastHope` | Last Hope of Humanity | 200,000 |
 
 ---
 
@@ -46,7 +58,7 @@ A **server-side** mod for **7 Days to Die** that introduces a nerdy, funny rank 
 
 ### Requirements
 
-- 7 Days to Die **dedicated server** (version 1.x)
+- 7 Days to Die **dedicated server v2.5** (or newer compatible release)
 - No client-side installation needed
 
 ### Steps
@@ -204,6 +216,98 @@ Or pass it directly:
 ```bash
 ./build.sh /opt/7dtd
 ```
+
+---
+
+## Testing Locally
+
+These steps walk through a full local test cycle using a 7DTD dedicated server running on the same machine as your development environment.
+
+### 1. Install the 7DTD Dedicated Server
+
+Use SteamCMD (Linux) or the Steam client (Windows) to install the **7 Days to Die Dedicated Server** (App ID 294420).
+
+```bash
+# Linux — anonymous SteamCMD download
+steamcmd +force_install_dir /opt/7dtd \
+         +login anonymous \
+         +app_update 294420 validate \
+         +quit
+```
+
+### 2. Build and Deploy the Mod
+
+```bash
+# Build and copy directly to the server's Mods/ folder in one step
+./build.sh /opt/7dtd /opt/7dtd/Mods
+```
+
+This places the following files under `/opt/7dtd/Mods/TitlesSystem/`:
+
+```
+TitlesSystem/
+├── ModInfo.xml
+├── TitlesSystem.dll
+└── Config/
+    └── TitlesRanks.xml
+```
+
+### 3. Start the Server and Verify the Mod Loads
+
+```bash
+cd /opt/7dtd
+./startserver.sh -configfile=serverconfig.xml
+```
+
+Watch the console output for:
+
+```
+[TitlesSystem] Initializing Titles System mod...
+[TitlesSystem] Loaded 30 ranks from .../Config/TitlesRanks.xml
+[TitlesSystem] Harmony patches applied.
+[TitlesSystem] Titles System mod initialized successfully.
+```
+
+### 4. Test with Console Commands
+
+Connect to the server console (telnet, Alloc's web-panel, etc.) and run:
+
+```bash
+# List all 30 rank tiers
+rank
+
+# Check your own rank (replace with actual player name or entity ID)
+rank check YourSteamName
+
+# Instantly simulate 1,000 zombie kills for fast rank testing
+rank set YourSteamName 1000
+
+# View the in-game leaderboard
+rank top 10
+```
+
+### 5. Iterate Without Restarting the Server
+
+> The server **must be restarted** to pick up a rebuilt DLL.
+> However, you can edit `Config/TitlesRanks.xml` rank thresholds and reload
+> them by restarting only — no recompile needed.
+
+Typical dev loop:
+
+```bash
+# 1. Edit source files
+# 2. Rebuild and redeploy
+./build.sh /opt/7dtd /opt/7dtd/Mods
+# 3. Restart the dedicated server
+# 4. Connect and test with 'rank set' to jump to any kill count
+```
+
+### 6. Confirm Rank Display In-Game
+
+After `rank set <player> <kills>`:
+- The player's name above their character model updates to `[ShortTitle] PlayerName`.
+- A global chat announcement is broadcast (if `AnnounceRankUp` is `true`).
+- Disconnect and reconnect to verify data persists across sessions.
 
 ---
 

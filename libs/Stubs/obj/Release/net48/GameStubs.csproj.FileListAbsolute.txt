@@ -1,0 +1,7 @@
+/home/runner/work/7d2d-titles-system/7d2d-titles-system/libs/Stubs/bin/Release/net48/GameStubs.dll
+/home/runner/work/7d2d-titles-system/7d2d-titles-system/libs/Stubs/bin/Release/net48/GameStubs.pdb
+/home/runner/work/7d2d-titles-system/7d2d-titles-system/libs/Stubs/obj/Release/net48/GameStubs.GeneratedMSBuildEditorConfig.editorconfig
+/home/runner/work/7d2d-titles-system/7d2d-titles-system/libs/Stubs/obj/Release/net48/GameStubs.csproj.CoreCompileInputs.cache
+/home/runner/work/7d2d-titles-system/7d2d-titles-system/libs/Stubs/obj/Release/net48/GameStubs.sourcelink.json
+/home/runner/work/7d2d-titles-system/7d2d-titles-system/libs/Stubs/obj/Release/net48/GameStubs.dll
+/home/runner/work/7d2d-titles-system/7d2d-titles-system/libs/Stubs/obj/Release/net48/GameStubs.pdb
