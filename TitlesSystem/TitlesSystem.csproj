@@ -57,12 +57,19 @@
   <!--
     CI build: replace game DLLs with stub types + Harmony from NuGet.
     The GITHUB_ACTIONS environment variable is set automatically in GitHub Actions.
+
+    IMPORTANT: GameTypes.cs is compiled directly into TitlesSystem.dll (not via
+    ProjectReference) so no separate GameStubs.dll is needed at runtime.
+    Harmony is referenced for compilation only (ExcludeAssets=runtime) because
+    the server already loads 0Harmony from the 0_TFP_Harmony mod folder.
   -->
   <ItemGroup Condition="'$(GITHUB_ACTIONS)' == 'true'">
-    <!-- Stub types that mirror the 7DTD game API (no real game installation needed) -->
-    <ProjectReference Include="../libs/Stubs/GameStubs.csproj" />
-    <!-- HarmonyLib from NuGet (replaces the game's bundled 0Harmony.dll) -->
-    <PackageReference Include="Lib.Harmony" Version="2.2.2" />
+    <!-- Stub types compiled inline — no external GameStubs.dll dependency at runtime -->
+    <Compile Include="../libs/Stubs/GameTypes.cs" />
+    <!-- Harmony for compilation only; runtime copy excluded (server provides 0Harmony via 0_TFP_Harmony) -->
+    <PackageReference Include="Lib.Harmony" Version="2.2.2">
+      <ExcludeAssets>runtime</ExcludeAssets>
+    </PackageReference>
   </ItemGroup>
 
   <!--
