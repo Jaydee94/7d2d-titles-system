@@ -17,7 +17,7 @@ namespace TitlesSystem.Commands
     {
         public override string[] getCommands()
         {
-            return new[] { "rank", "title", "ranks" };
+            return new[] { "rank", "/rank", "title", "/title", "ranks", "/ranks" };
         }
 
         public override string getDescription()
@@ -37,13 +37,16 @@ namespace TitlesSystem.Commands
 
         public override void Execute(List<string> _params, CommandSenderInfo _senderInfo)
         {
-            string sub = _params.Count > 0 ? _params[0].ToLower() : "list";
+            bool isInGameSender = _senderInfo.RemoteClientInfo != null;
+            string sub = _params.Count > 0
+                ? _params[0].ToLower()
+                : (isInGameSender ? "check" : "list");
 
             switch (sub)
             {
                 case "list":
                 case "ranks":
-                    CmdListRanks();
+                    CmdListRanks(_senderInfo);
                     break;
 
                 case "check":
@@ -55,7 +58,7 @@ namespace TitlesSystem.Commands
                     break;
 
                 case "top":
-                    CmdTopPlayers(_params);
+                    CmdTopPlayers(_params, _senderInfo);
                     break;
 
                 default:
@@ -69,17 +72,17 @@ namespace TitlesSystem.Commands
         //  Sub-command implementations
         // ------------------------------------------------------------------ //
 
-        private static void CmdListRanks()
+        private static void CmdListRanks(CommandSenderInfo sender)
         {
             var ranks = RankManager.Instance.Ranks;
-            Output($"=== TitlesSystem — {ranks.Count} Ranks ===");
+            Output($"=== TitlesSystem — {ranks.Count} Ranks ===", sender);
             for (int i = 0; i < ranks.Count; i++)
             {
                 var r = ranks[i];
                 string next = (i + 1 < ranks.Count)
                     ? $"next rank at {ranks[i + 1].KillsRequired} kills"
                     : "MAX RANK";
-                Output($"  {i + 1,2}. [{r.ShortTitle,10}] {r.Title} — {r.KillsRequired}+ kills ({next})");
+                Output($"  {i + 1,2}. [{r.ShortTitle,10}] {r.Title} — {r.KillsRequired}+ kills ({next})", sender);
             }
         }
 
@@ -93,7 +96,7 @@ namespace TitlesSystem.Commands
                 target = FindClientByNameOrId(query);
                 if (target == null)
                 {
-                    Output($"[TitlesSystem] Player '{query}' not found or not online.");
+                    Output($"[TitlesSystem] Player '{query}' not found or not online.", sender);
                     return;
                 }
             }
@@ -104,7 +107,7 @@ namespace TitlesSystem.Commands
 
             if (target == null)
             {
-                Output("[TitlesSystem] No player specified. Usage: rank check <name/entityId>");
+                Output("[TitlesSystem] No player specified. Usage: rank check <name/entityId>", sender);
                 return;
             }
 
@@ -112,7 +115,7 @@ namespace TitlesSystem.Commands
             var data = RankManager.Instance.GetPlayerData(targetId);
             if (data == null)
             {
-                Output($"[TitlesSystem] No rank data found for '{target.playerName}'. They may not have logged in yet.");
+                Output($"[TitlesSystem] No rank data found for '{target.playerName}'. They may not have logged in yet.", sender);
                 return;
             }
 
@@ -122,52 +125,52 @@ namespace TitlesSystem.Commands
                 ? $" | Next rank: [{ranks[data.CurrentRankIndex + 1].ShortTitle}] at {ranks[data.CurrentRankIndex + 1].KillsRequired} kills ({ranks[data.CurrentRankIndex + 1].KillsRequired - data.ZombieKills} more needed)"
                 : " | MAX RANK ACHIEVED!";
 
-            Output($"=== Rank for {data.OriginalName} ===");
-            Output($"  Title : [{current.ShortTitle}] {current.Title}");
-            Output($"  Kills : {data.ZombieKills}{nextInfo}");
-            Output($"  Rank  : #{data.CurrentRankIndex + 1} of {ranks.Count}");
+            Output($"=== Rank for {data.OriginalName} ===", sender);
+            Output($"  Title : [{current.ShortTitle}] {current.Title}", sender);
+            Output($"  Kills : {data.ZombieKills}{nextInfo}", sender);
+            Output($"  Rank  : #{data.CurrentRankIndex + 1} of {ranks.Count}", sender);
         }
 
         private static void CmdSetKills(List<string> _params, CommandSenderInfo sender)
         {
             if (!IsAdmin(sender))
             {
-                Output("[TitlesSystem] Permission denied — admin only.");
+                Output("[TitlesSystem] Permission denied — admin only.", sender);
                 return;
             }
 
             if (_params.Count < 3)
             {
-                Output("[TitlesSystem] Usage: rank set <name/entityId> <kills>");
+                Output("[TitlesSystem] Usage: rank set <name/entityId> <kills>", sender);
                 return;
             }
 
             ClientInfo target = FindClientByNameOrId(_params[1]);
             if (target == null)
             {
-                Output($"[TitlesSystem] Player '{_params[1]}' not found or not online.");
+                Output($"[TitlesSystem] Player '{_params[1]}' not found or not online.", sender);
                 return;
             }
 
             if (!int.TryParse(_params[2], out int kills) || kills < 0)
             {
-                Output("[TitlesSystem] Kill count must be a non-negative integer.");
+                Output("[TitlesSystem] Kill count must be a non-negative integer.", sender);
                 return;
             }
 
             string targetId = GameApiCompat.GetPlayerId(target);
             if (!RankManager.Instance.SetPlayerKills(targetId, kills))
             {
-                Output($"[TitlesSystem] Could not update kills — '{target.playerName}' has no rank data loaded.");
+                Output($"[TitlesSystem] Could not update kills — '{target.playerName}' has no rank data loaded.", sender);
                 return;
             }
 
             var data = RankManager.Instance.GetPlayerData(targetId);
             var rank = RankManager.Instance.Ranks[data.CurrentRankIndex];
-            Output($"[TitlesSystem] Set {target.playerName}'s kills to {kills} \u2192 Rank: [{rank.Title}]");
+            Output($"[TitlesSystem] Set {target.playerName}'s kills to {kills} → Rank: [{rank.Title}]", sender);
         }
 
-        private static void CmdTopPlayers(List<string> _params)
+        private static void CmdTopPlayers(List<string> _params, CommandSenderInfo sender)
         {
             int n = 10;
             if (_params.Count > 1) int.TryParse(_params[1], out n);
@@ -177,7 +180,7 @@ namespace TitlesSystem.Commands
             var clientList = ConnectionManager.Instance?.Clients?.list;
             if (clientList == null || clientList.Count == 0)
             {
-                Output("[TitlesSystem] No players currently online.");
+                Output("[TitlesSystem] No players currently online.", sender);
                 return;
             }
 
@@ -191,11 +194,11 @@ namespace TitlesSystem.Commands
 
             entries.Sort((a, b) => b.kills.CompareTo(a.kills));
 
-            Output($"=== Top {Math.Min(n, entries.Count)} Players by Zombie Kills ===");
+            Output($"=== Top {Math.Min(n, entries.Count)} Players by Zombie Kills ===", sender);
             for (int i = 0; i < Math.Min(n, entries.Count); i++)
             {
                 var (name, kills, title) = entries[i];
-                Output($"  {i + 1,2}. {name,-20} [{title,10}]  {kills} kills");
+                Output($"  {i + 1,2}. {name,-20} [{title,10}]  {kills} kills", sender);
             }
         }
 
@@ -235,8 +238,13 @@ namespace TitlesSystem.Commands
         /// <summary>
         /// Outputs a line to the command sender (server console, Telnet, CSMM, etc.).
         /// </summary>
-        private static void Output(string message)
+        private static void Output(string message, CommandSenderInfo sender)
         {
+            if (sender.RemoteClientInfo != null)
+            {
+                GameApiCompat.ChatMessageToClient(sender.RemoteClientInfo, message);
+            }
+
             SdtdConsole.Instance.Output(message);
         }
     }

@@ -124,14 +124,22 @@ These commands are available in the server console, via Telnet, and via CSMM/oth
 
 | Command | Description |
 |---------|-------------|
-| `rank` | List all rank tiers and their kill thresholds |
+| `rank` or `/rank` | In-game chat: show your current rank. Server console/Telnet: list all rank tiers |
 | `rank check` | Show your own current rank |
 | `rank check <name/entityId>` | Show another player's rank |
 | `rank set <name/entityId> <kills>` | **Admin** — forcibly set a player's kill count |
 | `rank top` | Show top 10 online players by kill count |
 | `rank top <n>` | Show top N online players (max 50) |
 
-**Aliases:** `ranks`, `title` (all map to the same command handler)
+**Aliases:** `ranks`, `title`, `/ranks`, `/title` (all map to the same command handler)
+
+### Command Output Location
+
+- If a player runs `rank` commands in-game, the response is sent to that player's chat.
+- The same response is also written to the server console.
+- If the command is run from server console / Telnet / RCON, output appears in that console channel as usual.
+- Bare `rank` from in-game behaves like `rank check` (self rank).
+- Compatibility note: on server versions that do not auto-route chat text to console commands, the mod intercepts chat input directly so `rank` and `/rank` still work from global chat.
 
 ### Examples
 
@@ -421,6 +429,8 @@ rank check YourSteamName
 rank set YourSteamName 1000
 rank top 10
 ```
+
+If you run these commands from an in-game player, results are shown in that player's chat.
 
 ### 5. Iterate Without Restarting the Server
 
