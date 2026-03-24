@@ -22,35 +22,35 @@ A **server-side** mod for **7 Days to Die** (v2.5) that introduces a funny, apoc
 | # | Short Title | Full Title | Kills Required |
 |---|-------------|------------|----------------|
 | 1 | `Civilian` | Freshly Irradiated Civilian | 0 |
-| 2 | `Diver` | Dumpster Diver of Doom | 10 |
-| 3 | `Rusty` | Rusty Nail Enthusiast | 25 |
-| 4 | `CanOpener` | Can Opener Connoisseur | 50 |
-| 5 | `TinCan` | Tin Can Knight | 75 |
-| 6 | `Wanderer` | Wandering Wastelander | 100 |
-| 7 | `Drifter` | Dead Road Drifter | 150 |
-| 8 | `Scavenger` | Scavenger of the Fallen | 200 |
-| 9 | `Prophet` | Junkyard Prophet | 275 |
-| 10 | `Raider` | Honorary Raider | 350 |
-| 11 | `VaultKicker` | Vault Door Kickboxer | 500 |
-| 12 | `Buster` | Bunker Buster | 625 |
-| 13 | `Whisperer` | Mutant Whisperer | 750 |
-| 14 | `LastShell` | The Last Shotgun Shell | 1,000 |
-| 15 | `Baron` | Bottle Cap Baron | 1,250 |
-| 16 | `Duke` | Duke of the Dead Lands | 1,500 |
-| 17 | `Headliner` | Horde Night Headliner | 2,500 |
-| 18 | `Trapper` | Ghoul Trapper | 3,250 |
-| 19 | `Ambassador` | Ambassador of Annihilation | 4,000 |
-| 20 | `Warlord` | Warlord of the Wasteland | 6,000 |
-| 21 | `Ironclad` | Ironclad Wastelander | 7,500 |
-| 22 | `Shepherd` | Shepherd of the Apocalypse | 9,000 |
-| 23 | `Saint` | Post-Apocalyptic Saint | 12,000 |
-| 24 | `Undying` | The Undying Ghoul Hunter | 15,000 |
-| 25 | `Harbinger` | Harbinger of the Final Horde | 25,000 |
-| 26 | `NukeSurvivor` | Nuclear Winter Survivor | 37,500 |
-| 27 | `RadKing` | The Rad-Scorpion King | 50,000 |
-| 28 | `Overlord` | Irradiated Overlord | 75,000 |
-| 29 | `ChosenOne` | Chosen One of the Wasteland | 100,000 |
-| 30 | `LastHope` | Last Hope of Humanity | 200,000 |
+| 2 | `Diver` | Dumpster Diver of Doom | 5 |
+| 3 | `Rusty` | Rusty Nail Enthusiast | 10 |
+| 4 | `CanOpener` | Can Opener Connoisseur | 20 |
+| 5 | `TinCan` | Tin Can Knight | 35 |
+| 6 | `Wanderer` | Wandering Wastelander | 50 |
+| 7 | `Drifter` | Dead Road Drifter | 75 |
+| 8 | `Scavenger` | Scavenger of the Fallen | 100 |
+| 9 | `Prophet` | Junkyard Prophet | 130 |
+| 10 | `Raider` | Honorary Raider | 175 |
+| 11 | `VaultKicker` | Vault Door Kickboxer | 250 |
+| 12 | `Buster` | Bunker Buster | 300 |
+| 13 | `Whisperer` | Mutant Whisperer | 375 |
+| 14 | `LastShell` | The Last Shotgun Shell | 500 |
+| 15 | `Baron` | Bottle Cap Baron | 600 |
+| 16 | `Duke` | Duke of the Dead Lands | 750 |
+| 17 | `Headliner` | Horde Night Headliner | 1,250 |
+| 18 | `Trapper` | Ghoul Trapper | 1,500 |
+| 19 | `Ambassador` | Ambassador of Annihilation | 2,000 |
+| 20 | `Warlord` | Warlord of the Wasteland | 3,000 |
+| 21 | `Ironclad` | Ironclad Wastelander | 3,750 |
+| 22 | `Shepherd` | Shepherd of the Apocalypse | 4,500 |
+| 23 | `Saint` | Post-Apocalyptic Saint | 6,000 |
+| 24 | `Undying` | The Undying Ghoul Hunter | 7,500 |
+| 25 | `Harbinger` | Harbinger of the Final Horde | 12,500 |
+| 26 | `NukeSurvivor` | Nuclear Winter Survivor | 18,000 |
+| 27 | `RadKing` | The Rad-Scorpion King | 25,000 |
+| 28 | `Overlord` | Irradiated Overlord | 37,500 |
+| 29 | `ChosenOne` | Chosen One of the Wasteland | 50,000 |
+| 30 | `LastHope` | Last Hope of Humanity | 100,000 |
 
 ---
 
@@ -78,7 +78,7 @@ A **server-side** mod for **7 Days to Die** (v2.5) that introduces a funny, apoc
 
 ```
 [TitlesSystem] Initializing Titles System mod...
-[TitlesSystem] Loaded 19 ranks from .../Config/TitlesRanks.xml
+[TitlesSystem] Loaded 30 ranks from .../Config/TitlesRanks.xml
 [TitlesSystem] Harmony patches applied.
 [TitlesSystem] Titles System mod initialized successfully.
 ```
@@ -176,7 +176,7 @@ Data is saved:
 
 ### Prerequisites
 
-- [.NET SDK 6+](https://dotnet.microsoft.com/download) **or** MSBuild (Visual Studio 2019+)
+- [.NET SDK 8+](https://dotnet.microsoft.com/download)
 - 7 Days to Die server installed (needed for game DLL references)
 
 ### Quick Build
@@ -216,6 +216,21 @@ Or pass it directly:
 ```bash
 ./build.sh /opt/7dtd
 ```
+
+### Running Unit Tests
+
+The core rank calculation and data-persistence logic is covered by an xUnit test suite that runs without any game installation. Tests run on .NET 8 and require no game DLLs:
+
+```bash
+dotnet test TitlesSystem.Tests/
+```
+
+All 35 tests should pass and cover:
+- Rank boundary computation (`RankCalculator`)
+- `PlayerRankData` XML serialization round-trips
+- `RankDefinition` construction and formatting
+
+The same `dotnet test` step runs automatically on every pull request via the CI pipeline.
 
 ---
 
