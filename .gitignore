@@ -2,3 +2,5 @@ TitlesSystem/obj/
 TitlesSystem/bin/
 libs/Stubs/obj/
 libs/Stubs/bin/
+TitlesSystem.Tests/obj/
+TitlesSystem.Tests/bin/

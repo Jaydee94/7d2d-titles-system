@@ -311,18 +311,8 @@ namespace TitlesSystem
         //  Private Helpers
         // ------------------------------------------------------------------ //
 
-        private int ComputeRankIndex(int kills)
-        {
-            int index = 0;
-            for (int i = 0; i < _ranks.Count; i++)
-            {
-                if (kills >= _ranks[i].KillsRequired)
-                    index = i;
-                else
-                    break;
-            }
-            return index;
-        }
+        private int ComputeRankIndex(int kills) =>
+            RankCalculator.ComputeRankIndex(_ranks, kills);
 
         /// <summary>
         /// Modifies the EntityPlayer's entityName to "[ShortTitle] OriginalName"
