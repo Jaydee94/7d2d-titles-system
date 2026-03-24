@@ -6,8 +6,8 @@ A **server-side** mod for **7 Days to Die** that introduces a nerdy, funny rank 
 
 ## Features
 
-- 🧟 **19 progressive ranks** based on zombie kills — from *Noob of the Apocalypse* to *God.getInstance()*
-- 🪧 **Name display** — short rank title shown in brackets above each player's model (`[10xDev] PlayerName`)
+- 🧟 **19 progressive ranks** based on zombie kills — from *Freshly Irradiated Civilian* to *Chosen One of the Wasteland*
+- 🪧 **Name display** — short rank title shown in brackets above each player's model (`[Warlord] PlayerName`)
 - 📢 **Rank-up announcements** — global server chat notification when a player levels up
 - 💾 **Persistent data** — kill counts and ranks survive server restarts, stored per world save
 - 🛠️ **Admin commands** — check ranks, force-set kills, view a top-10 leaderboard
@@ -20,25 +20,25 @@ A **server-side** mod for **7 Days to Die** that introduces a nerdy, funny rank 
 
 | # | Short Title | Full Title | Kills Required |
 |---|-------------|------------|----------------|
-| 1 | `Noob` | Noob of the Apocalypse | 0 |
-| 2 | `Rookie` | Rookie Corpse Kicker | 10 |
-| 3 | `Puncher` | Certified Zombie Puncher | 25 |
-| 4 | `Exception` | Exception: ZombieNotFound | 50 |
-| 5 | `Overflow` | Stack Overflow Survivor | 100 |
-| 6 | `Debugger` | Senior Undead Debugger | 200 |
-| 7 | `printf` | printf('I Survived') | 350 |
-| 8 | `Architect` | Zombie-Slaying Architect | 500 |
-| 9 | `Exterminator` | Runtime Error Exterminator | 750 |
-| 10 | `10xDev` | 10x Apocalypse Developer | 1,000 |
-| 11 | `sudo` | sudo killall zombies | 1,500 |
-| 12 | `chmod000` | chmod 000 /undead | 2,500 |
-| 13 | `SegFault` | Segmentation Fault Survivor | 4,000 |
-| 14 | `nullptr` | Null Pointer of Death | 6,000 |
-| 15 | `Over9000` | It's Over 9000 (Kills) | 9,000 |
-| 16 | `force-push` | git push --force Apocalypse | 15,000 |
-| 17 | `Legend` | Legendary Exception Handler | 25,000 |
-| 18 | `Undefined` | The Undefined Behavior | 50,000 |
-| 19 | `God` | God.getInstance() | 100,000 |
+| 1 | `Civilian` | Freshly Irradiated Civilian | 0 |
+| 2 | `Diver` | Dumpster Diver of Doom | 10 |
+| 3 | `Rusty` | Rusty Nail Enthusiast | 25 |
+| 4 | `CanOpener` | Can Opener Connoisseur | 50 |
+| 5 | `Wanderer` | Wandering Wastelander | 100 |
+| 6 | `Scavenger` | Scavenger of the Fallen | 200 |
+| 7 | `Raider` | Honorary Raider | 350 |
+| 8 | `VaultKicker` | Vault Door Kickboxer | 500 |
+| 9 | `Whisperer` | Mutant Whisperer | 750 |
+| 10 | `LastShell` | The Last Shotgun Shell | 1,000 |
+| 11 | `Duke` | Duke of the Dead Lands | 1,500 |
+| 12 | `Headliner` | Horde Night Headliner | 2,500 |
+| 13 | `Ambassador` | Ambassador of Annihilation | 4,000 |
+| 14 | `Warlord` | Warlord of the Wasteland | 6,000 |
+| 15 | `Shepherd` | Shepherd of the Apocalypse | 9,000 |
+| 16 | `Undying` | The Undying Ghoul Hunter | 15,000 |
+| 17 | `Harbinger` | Harbinger of the Final Horde | 25,000 |
+| 18 | `RadKing` | The Rad-Scorpion King | 50,000 |
+| 19 | `ChosenOne` | Chosen One of the Wasteland | 100,000 |
 
 ---
 

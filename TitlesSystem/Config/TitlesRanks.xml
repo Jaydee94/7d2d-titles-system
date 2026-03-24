@@ -25,37 +25,37 @@
 
     <Ranks>
         <!-- Starter rank - everyone begins here -->
-        <Rank kills="0"      title="Noob of the Apocalypse"      shortTitle="Noob"/>
+        <Rank kills="0"      title="Freshly Irradiated Civilian"  shortTitle="Civilian"/>
 
         <!-- Getting started -->
-        <Rank kills="10"     title="Rookie Corpse Kicker"         shortTitle="Rookie"/>
-        <Rank kills="25"     title="Certified Zombie Puncher"     shortTitle="Puncher"/>
-        <Rank kills="50"     title="Exception: ZombieNotFound"    shortTitle="Exception"/>
+        <Rank kills="10"     title="Dumpster Diver of Doom"       shortTitle="Diver"/>
+        <Rank kills="25"     title="Rusty Nail Enthusiast"        shortTitle="Rusty"/>
+        <Rank kills="50"     title="Can Opener Connoisseur"       shortTitle="CanOpener"/>
 
         <!-- Intermediate -->
-        <Rank kills="100"    title="Stack Overflow Survivor"      shortTitle="Overflow"/>
-        <Rank kills="200"    title="Senior Undead Debugger"       shortTitle="Debugger"/>
-        <Rank kills="350"    title="printf('I Survived')"         shortTitle="printf"/>
+        <Rank kills="100"    title="Wandering Wastelander"        shortTitle="Wanderer"/>
+        <Rank kills="200"    title="Scavenger of the Fallen"      shortTitle="Scavenger"/>
+        <Rank kills="350"    title="Honorary Raider"              shortTitle="Raider"/>
 
         <!-- Advanced -->
-        <Rank kills="500"    title="Zombie-Slaying Architect"     shortTitle="Architect"/>
-        <Rank kills="750"    title="Runtime Error Exterminator"   shortTitle="Exterminator"/>
-        <Rank kills="1000"   title="10x Apocalypse Developer"     shortTitle="10xDev"/>
+        <Rank kills="500"    title="Vault Door Kickboxer"         shortTitle="VaultKicker"/>
+        <Rank kills="750"    title="Mutant Whisperer"             shortTitle="Whisperer"/>
+        <Rank kills="1000"   title="The Last Shotgun Shell"       shortTitle="LastShell"/>
 
         <!-- Expert -->
-        <Rank kills="1500"   title="sudo killall zombies"         shortTitle="sudo"/>
-        <Rank kills="2500"   title="chmod 000 /undead"            shortTitle="chmod000"/>
-        <Rank kills="4000"   title="Segmentation Fault Survivor"  shortTitle="SegFault"/>
+        <Rank kills="1500"   title="Duke of the Dead Lands"       shortTitle="Duke"/>
+        <Rank kills="2500"   title="Horde Night Headliner"        shortTitle="Headliner"/>
+        <Rank kills="4000"   title="Ambassador of Annihilation"   shortTitle="Ambassador"/>
 
         <!-- Legend -->
-        <Rank kills="6000"   title="Null Pointer of Death"        shortTitle="nullptr"/>
-        <Rank kills="9000"   title="It's Over 9000 (Kills)"       shortTitle="Over9000"/>
-        <Rank kills="15000"  title="git push --force Apocalypse"  shortTitle="force-push"/>
+        <Rank kills="6000"   title="Warlord of the Wasteland"     shortTitle="Warlord"/>
+        <Rank kills="9000"   title="Shepherd of the Apocalypse"   shortTitle="Shepherd"/>
+        <Rank kills="15000"  title="The Undying Ghoul Hunter"     shortTitle="Undying"/>
 
         <!-- Mythical -->
-        <Rank kills="25000"  title="Legendary Exception Handler"  shortTitle="Legend"/>
-        <Rank kills="50000"  title="The Undefined Behavior"       shortTitle="Undefined"/>
-        <Rank kills="100000" title="God.getInstance()"            shortTitle="God"/>
+        <Rank kills="25000"  title="Harbinger of the Final Horde" shortTitle="Harbinger"/>
+        <Rank kills="50000"  title="The Rad-Scorpion King"        shortTitle="RadKing"/>
+        <Rank kills="100000" title="Chosen One of the Wasteland"  shortTitle="ChosenOne"/>
     </Ranks>
 
 </TitlesConfig>
