@@ -1,6 +1,6 @@
 name: Build and Release
 
-on:
+"on":
   push:
     branches:
       - main
@@ -29,7 +29,41 @@ jobs:
           dotnet-version: '8.0.x'
 
       # -----------------------------------------------------------------------
-      # 3. Read the mod version from ModInfo.xml
+      # 3. Install SteamCMD and fetch 7DTD dedicated server DLLs
+      #    Release artifacts must be built against real game DLLs so the
+      #    runtime IModApi type identity matches the server.
+      # -----------------------------------------------------------------------
+      - name: Install 7DTD Dedicated Server
+        run: |
+          set -euo pipefail
+
+          mkdir -p "$HOME/steamcmd"
+          cd "$HOME/steamcmd"
+          curl -fsSL "https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz" -o steamcmd_linux.tar.gz
+          tar -xzf steamcmd_linux.tar.gz
+
+          SERVER_ROOT="${{ github.workspace }}/.7dtd-server"
+          mkdir -p "$SERVER_ROOT"
+
+          ./steamcmd.sh \
+            +@sSteamCmdForcePlatformType windows \
+            +force_install_dir "$SERVER_ROOT" \
+            +login anonymous \
+            +app_update 294420 validate \
+            +quit
+
+          HAS_CLIENT_DLL=false
+          HAS_SERVER_DLL=false
+          [[ -f "$SERVER_ROOT/7DaysToDie_Data/Managed/Assembly-CSharp.dll" ]] && HAS_CLIENT_DLL=true
+          [[ -f "$SERVER_ROOT/7DaysToDieServer_Data/Managed/Assembly-CSharp.dll" ]] && HAS_SERVER_DLL=true
+
+          if [[ "$HAS_CLIENT_DLL" == false && "$HAS_SERVER_DLL" == false ]]; then
+            echo "ERROR: Assembly-CSharp.dll not found after dedicated server install."
+            exit 1
+          fi
+
+      # -----------------------------------------------------------------------
+      # 4. Read the mod version from ModInfo.xml
       # -----------------------------------------------------------------------
       - name: Read mod version
         id: modversion
@@ -39,19 +73,19 @@ jobs:
           echo "Mod version: ${VERSION}"
 
       # -----------------------------------------------------------------------
-      # 4. Build the mod
-      #    GITHUB_ACTIONS=true is set automatically; TitlesSystem.csproj uses
-      #    it to switch from local game DLL references to the CI stub project.
+      # 5. Build the mod against real dedicated server DLLs
       # -----------------------------------------------------------------------
       - name: Build TitlesSystem
         run: |
+          SERVER_ROOT="${{ github.workspace }}/.7dtd-server"
           dotnet build TitlesSystem/TitlesSystem.csproj \
             -c Release \
+            -p:GameRoot="$SERVER_ROOT" \
             -p:OutputPath=bin/Release
         working-directory: ${{ github.workspace }}
 
       # -----------------------------------------------------------------------
-      # 5. Package the mod into a deployable zip
+      # 6. Package the mod into a deployable zip
       #    Structure mirrors what goes inside <ServerRoot>/Mods/TitlesSystem/
       # -----------------------------------------------------------------------
       - name: Package mod
@@ -71,7 +105,7 @@ jobs:
         working-directory: ${{ github.workspace }}
 
       # -----------------------------------------------------------------------
-      # 6. Create (or update) the GitHub Release
+      # 7. Create (or update) the GitHub Release
       #    Uses the built-in GitHub CLI — no third-party action required.
       # -----------------------------------------------------------------------
       - name: Create GitHub Release
