@@ -360,6 +360,16 @@ Open **PowerShell** in the repository root and run:
 .\deploy-windows.ps1 -StartServer
 ```
 
+From **WSL**, use the Windows PowerShell host and pass script arguments after the converted script path:
+
+```bash
+# Build and deploy from WSL
+powershell.exe -ExecutionPolicy Bypass -File "$(wslpath -w ./deploy-windows.ps1)"
+
+# Build, deploy, and start the server from WSL
+powershell.exe -ExecutionPolicy Bypass -File "$(wslpath -w ./deploy-windows.ps1)" -StartServer
+```
+
 The script:
 - Auto-detects your server installation from common Steam paths
 - Builds the mod with game DLLs (or falls back to CI stubs if DLLs aren't found)
@@ -387,8 +397,10 @@ If you did not pass `-StartServer` above:
 
 ```powershell
 cd "C:\Program Files (x86)\Steam\steamapps\common\7 Days to Die Dedicated Server"
-.\StartDedicatedServer.bat
+.\startdedicated.bat
 ```
+
+Some installs may use `StartDedicatedServer.bat` instead. The deploy script now detects `StartDedicatedServer.bat`, `startdedicated.bat`, or `7DaysToDieServer.exe` automatically when `-StartServer` is used.
 
 Watch the console window for:
 
@@ -438,6 +450,36 @@ After `rank set <player> <kills>`:
 - The player's name above their character model updates to `[ShortTitle] PlayerName`.
 - A global chat announcement is broadcast (if `AnnounceRankUp` is `true`).
 - Disconnect and reconnect to verify data persists across sessions.
+
+### 7. Runtime Smoke Test (Windows + WSL)
+
+Use this quick sequence after each code change:
+
+1. Deploy from WSL:
+
+    powershell.exe -ExecutionPolicy Bypass -File "$(wslpath -w ./deploy-windows.ps1)"
+
+2. Or deploy and start in one command from WSL:
+
+    powershell.exe -ExecutionPolicy Bypass -File "$(wslpath -w ./deploy-windows.ps1)" -StartServer
+
+3. If starting manually on Windows:
+
+    C:\Program Files (x86)\Steam\steamapps\common\7 Days to Die Dedicated Server\startdedicated.bat
+
+4. In the server console, run:
+
+    rank
+    rank check YourSteamName
+    rank set YourSteamName 1000
+    rank top 10
+
+5. Verify log output contains TitlesSystem initialization lines.
+
+    Typical log folder on this setup:
+    C:\Users\<YourUser>\AppData\Roaming\7DaysToDie\logs
+
+6. Stop and restart the server, then run `rank check` again to confirm persisted data.
 
 ---
 

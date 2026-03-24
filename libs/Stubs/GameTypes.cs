@@ -1,11 +1,7 @@
-// GameTypes.cs — Stub type definitions for CI builds.
+// GameTypes.cs - Stub type definitions for CI builds.
 //
-// These types mirror the public surface of the 7 Days to Die game assemblies
-// (Assembly-CSharp.dll, UnityEngine.CoreModule.dll, 0Harmony.dll) so that
-// TitlesSystem.csproj can compile in GitHub Actions without a game installation.
-//
-// Types are declared in the global namespace to match the game's assemblies.
-// NOTHING here is executed at runtime — the real game DLLs take precedence.
+// These types mirror the public surface of key 7DTD APIs closely enough for
+// compilation in CI without an installed dedicated server.
 
 using System;
 using System.Collections.Generic;
@@ -25,51 +21,30 @@ public class Mod
 }
 
 // ---------------------------------------------------------------------------
-// Logging
+// Identifiers / client identity
 // ---------------------------------------------------------------------------
 
-public static class Log
+public class PlatformUserIdentifierAbs
 {
-    public static void Out(string msg) { }
-    public static void Warning(string msg) { }
-    public static void Error(string msg) { }
+    public string CombinedString { get; set; } = string.Empty;
+
+    public static PlatformUserIdentifierAbs FromCombinedString(string combined, bool logErrors)
+    {
+        return new PlatformUserIdentifierAbs { CombinedString = combined ?? string.Empty };
+    }
+
+    public override string ToString() => CombinedString;
 }
-
-// ---------------------------------------------------------------------------
-// Events
-// ---------------------------------------------------------------------------
-
-public class ModEventSimple
-{
-    public void RegisterHandler(Action handler) { }
-}
-
-public class ModEventPlayerSpawned
-{
-    public void RegisterHandler(Action<ClientInfo, RespawnType, Vector3i> handler) { }
-}
-
-public class ModEventPlayerDisconnected
-{
-    public void RegisterHandler(Action<ClientInfo, bool> handler) { }
-}
-
-public static class ModEvents
-{
-    public static readonly ModEventSimple GameStartDone = new ModEventSimple();
-    public static readonly ModEventPlayerSpawned PlayerSpawnedInWorld = new ModEventPlayerSpawned();
-    public static readonly ModEventPlayerDisconnected PlayerDisconnected = new ModEventPlayerDisconnected();
-}
-
-// ---------------------------------------------------------------------------
-// Client / Player identity
-// ---------------------------------------------------------------------------
 
 public class ClientInfo
 {
     public string playerId;
     public string playerName;
     public int entityId;
+
+    public PlatformUserIdentifierAbs PlatformId { get; set; } = new PlatformUserIdentifierAbs();
+    public PlatformUserIdentifierAbs CrossplatformId { get; set; } = new PlatformUserIdentifierAbs();
+    public PlatformUserIdentifierAbs InternalId => PlatformId;
 }
 
 public enum RespawnType
@@ -86,8 +61,49 @@ public struct Vector3i
     public int x, y, z;
 }
 
+public class SdtdConsole
+{
+    public static SdtdConsole Instance { get; } = new SdtdConsole();
+    public void Output(string msg) { }
+}
+
 // ---------------------------------------------------------------------------
-// Entities
+// Events
+// ---------------------------------------------------------------------------
+
+public static class ModEvents
+{
+    public struct SGameStartDoneData { }
+
+    public struct SPlayerSpawnedInWorldData
+    {
+        public ClientInfo ClientInfo;
+        public bool IsLocalPlayer;
+        public int EntityId;
+        public RespawnType RespawnType;
+        public Vector3i Position;
+    }
+
+    public struct SPlayerDisconnectedData
+    {
+        public ClientInfo ClientInfo;
+        public bool GameShuttingDown;
+    }
+
+    public delegate void ModEventHandlerDelegate<T>(ref T data);
+
+    public class ModEvent<T>
+    {
+        public void RegisterHandler(ModEventHandlerDelegate<T> handler) { }
+    }
+
+    public static readonly ModEvent<SGameStartDoneData> GameStartDone = new ModEvent<SGameStartDoneData>();
+    public static readonly ModEvent<SPlayerSpawnedInWorldData> PlayerSpawnedInWorld = new ModEvent<SPlayerSpawnedInWorldData>();
+    public static readonly ModEvent<SPlayerDisconnectedData> PlayerDisconnected = new ModEvent<SPlayerDisconnectedData>();
+}
+
+// ---------------------------------------------------------------------------
+// Entities / damage
 // ---------------------------------------------------------------------------
 
 public class EntityAlive
@@ -102,6 +118,7 @@ public class EntityZombie : EntityAlive { }
 public class EntityPlayer : EntityAlive
 {
     public bool bPlayerDirty;
+    public bool bPlayerStatsChanged;
 }
 
 public struct DamageResponse
@@ -112,10 +129,14 @@ public struct DamageResponse
 public class DamageSource
 {
     public int BoundEntityId;
+    public int ownerEntityId;
+    public int CreatorEntityId;
+
+    public int getEntityId() => BoundEntityId;
 }
 
 // ---------------------------------------------------------------------------
-// World / Game state
+// World / game state
 // ---------------------------------------------------------------------------
 
 public class WorldPlayerBase
@@ -131,6 +152,28 @@ public class World
 public class AdminTools
 {
     public int GetUserPermissionLevel(string playerId) => 1000;
+    public bool CommandAllowedFor(string[] cmdNames, ClientInfo clientInfo) => false;
+}
+
+public enum EChatType
+{
+    Global,
+    Friends,
+    Team,
+    Whisper,
+}
+
+public enum EMessageSender
+{
+    None,
+}
+
+public static class GeneratedTextManager
+{
+    public enum BbCodeSupportMode
+    {
+        None,
+    }
 }
 
 public class GameManager
@@ -147,6 +190,15 @@ public class GameManager
         string _mainName,
         bool _localizeMain,
         List<int> _recipientEntityIds) { }
+
+    public void ChatMessageServer(
+        ClientInfo _cInfo,
+        EChatType _type,
+        int _senderId,
+        string _msg,
+        List<int> _recipientEntityIds,
+        EMessageSender _msgSender,
+        GeneratedTextManager.BbCodeSupportMode _bbMode) { }
 }
 
 // ---------------------------------------------------------------------------
@@ -158,6 +210,8 @@ public class ClientList
     public List<ClientInfo> list { get; } = new List<ClientInfo>();
     public ClientInfo GetForEntityId(int entityId) => null;
     public ClientInfo GetForPlayerId(string playerId) => null;
+    public ClientInfo ForEntityId(int entityId) => GetForEntityId(entityId);
+    public ClientInfo ForUserId(PlatformUserIdentifierAbs userIdentifier) => null;
 }
 
 public class ConnectionManager
@@ -167,7 +221,7 @@ public class ConnectionManager
 }
 
 // ---------------------------------------------------------------------------
-// Game preferences
+// Game preferences / IO
 // ---------------------------------------------------------------------------
 
 public static class GamePrefs
@@ -181,16 +235,9 @@ public enum EnumGamePrefs
     GameName,
 }
 
-// ---------------------------------------------------------------------------
-// Chat
-// ---------------------------------------------------------------------------
-
-public enum EChatType
+public static class GameIO
 {
-    Global,
-    Friends,
-    Team,
-    Whisper,
+    public static string GetSaveGameDir() => string.Empty;
 }
 
 // ---------------------------------------------------------------------------
@@ -199,19 +246,13 @@ public enum EChatType
 
 public abstract class ConsoleCmdAbstract
 {
-    protected abstract string[] getCommands();
-    protected abstract string getDescription();
-    protected virtual string getHelp() => string.Empty;
+    public abstract string[] getCommands();
+    public abstract string getDescription();
+    public virtual string getHelp() => string.Empty;
     public abstract void Execute(List<string> _params, CommandSenderInfo _senderInfo);
 }
 
 public struct CommandSenderInfo
 {
     public ClientInfo RemoteClientInfo;
-}
-
-public class SdtdConsole
-{
-    public static SdtdConsole Instance { get; } = new SdtdConsole();
-    public void Output(string msg) { }
 }

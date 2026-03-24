@@ -47,7 +47,7 @@ namespace TitlesSystem
         //  Game Event Handlers
         // ------------------------------------------------------------------ //
 
-        private void OnGameStartDone()
+        private void OnGameStartDone(ref ModEvents.SGameStartDoneData _data)
         {
             try
             {
@@ -60,12 +60,12 @@ namespace TitlesSystem
             }
         }
 
-        private void OnPlayerSpawnedInWorld(ClientInfo _cInfo, RespawnType _respawnReason, Vector3i _pos)
+        private void OnPlayerSpawnedInWorld(ref ModEvents.SPlayerSpawnedInWorldData _data)
         {
             try
             {
-                if (_cInfo == null) return;
-                RankManager.Instance.OnPlayerSpawned(_cInfo);
+                if (_data.ClientInfo == null) return;
+                RankManager.Instance.OnPlayerSpawned(_data.ClientInfo);
             }
             catch (Exception e)
             {
@@ -73,12 +73,12 @@ namespace TitlesSystem
             }
         }
 
-        private void OnPlayerDisconnected(ClientInfo _cInfo, bool _bShutdown)
+        private void OnPlayerDisconnected(ref ModEvents.SPlayerDisconnectedData _data)
         {
             try
             {
-                if (_cInfo == null) return;
-                RankManager.Instance.OnPlayerDisconnected(_cInfo);
+                if (_data.ClientInfo == null) return;
+                RankManager.Instance.OnPlayerDisconnected(_data.ClientInfo);
             }
             catch (Exception e)
             {

@@ -58,9 +58,13 @@ namespace TitlesSystem
         {
             try
             {
-                string saveDir = GamePrefs.GetString(EnumGamePrefs.SaveGameFolder);
-                string gameName = GamePrefs.GetString(EnumGamePrefs.GameName);
-                _dataPath = Path.Combine(saveDir, gameName, "TitlesSystem");
+                string saveDir = GameApiCompat.GetSaveGameDir();
+                if (string.IsNullOrEmpty(saveDir))
+                {
+                    throw new InvalidOperationException("Save game directory could not be resolved.");
+                }
+
+                _dataPath = Path.Combine(saveDir, "TitlesSystem");
                 Directory.CreateDirectory(_dataPath);
                 Log.Out($"[TitlesSystem] Data directory: {_dataPath}");
             }
@@ -199,24 +203,27 @@ namespace TitlesSystem
         {
             if (clientInfo == null) return;
 
-            if (!_playerData.TryGetValue(clientInfo.playerId, out var data))
+            string playerId = GameApiCompat.GetPlayerId(clientInfo);
+            if (string.IsNullOrEmpty(playerId)) return;
+
+            if (!_playerData.TryGetValue(playerId, out var data))
             {
                 // Try to load from disk first
-                data = LoadPlayerData(clientInfo.playerId);
+                data = LoadPlayerData(playerId);
 
                 if (data == null)
                 {
                     // First time this player has connected
                     string originalName = GetOriginalName(clientInfo);
-                    data = new PlayerRankData(clientInfo.playerId, originalName);
+                    data = new PlayerRankData(playerId, originalName);
                     Log.Out($"[TitlesSystem] New player '{originalName}' registered.");
                 }
 
-                _playerData[clientInfo.playerId] = data;
+                _playerData[playerId] = data;
             }
 
             data.Touch();
-            UpdatePlayerDisplayName(clientInfo.entityId, data);
+            UpdatePlayerDisplayName(GameApiCompat.GetEntityId(clientInfo), data);
 
             Log.Out($"[TitlesSystem] '{data.OriginalName}' spawned with rank [{_ranks[data.CurrentRankIndex].ShortTitle}] ({data.ZombieKills} kills).");
         }
@@ -229,7 +236,10 @@ namespace TitlesSystem
         {
             if (clientInfo == null) return;
 
-            if (_playerData.TryGetValue(clientInfo.playerId, out var data))
+            string playerId = GameApiCompat.GetPlayerId(clientInfo);
+            if (string.IsNullOrEmpty(playerId)) return;
+
+            if (_playerData.TryGetValue(playerId, out var data))
             {
                 data.Touch();
                 SavePlayerData(data);
@@ -258,14 +268,7 @@ namespace TitlesSystem
                 if (_announceRankUp)
                 {
                     string message = $"[TitlesSystem] {data.OriginalName} has been promoted to [{newRank.Title}]! ({data.ZombieKills} zombies slain)";
-                    GameManager.Instance.ChatMessageServer(
-                        null,
-                        EChatType.Global,
-                        -1,
-                        message,
-                        "TitlesSystem",
-                        false,
-                        null);
+                    GameApiCompat.ChatMessageGlobal(message);
                 }
             }
 
@@ -337,7 +340,7 @@ namespace TitlesSystem
                 if (player.entityName != newName)
                 {
                     player.entityName = newName;
-                    player.bPlayerDirty = true;
+                    GameApiCompat.MarkPlayerNameDirty(player);
                 }
             }
             catch (Exception e)
@@ -367,7 +370,7 @@ namespace TitlesSystem
         {
             try
             {
-                return ConnectionManager.Instance?.Clients?.GetForPlayerId(playerId);
+                return GameApiCompat.GetClientInfoByPlayerId(playerId);
             }
             catch
             {

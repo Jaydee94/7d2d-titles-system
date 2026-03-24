@@ -29,7 +29,9 @@
     <GameRoot Condition="'$(GameRoot)' == '' and Exists('/home/steam/.steam/SteamApps/common/7 Days to Die Dedicated Server')">/home/steam/.steam/SteamApps/common/7 Days to Die Dedicated Server</GameRoot>
     <GameRoot Condition="'$(GameRoot)' == '' and Exists('/opt/7dtd')">/opt/7dtd</GameRoot>
     <GameRoot Condition="'$(GameRoot)' == ''">C:\Program Files (x86)\Steam\steamapps\common\7 Days To Die</GameRoot>
-    <ManagedDir>$(GameRoot)/7DaysToDie_Data/Managed</ManagedDir>
+    <ManagedDir Condition="Exists('$(GameRoot)/7DaysToDie_Data/Managed')">$(GameRoot)/7DaysToDie_Data/Managed</ManagedDir>
+    <ManagedDir Condition="'$(ManagedDir)' == '' and Exists('$(GameRoot)/7DaysToDieServer_Data/Managed')">$(GameRoot)/7DaysToDieServer_Data/Managed</ManagedDir>
+    <ManagedDir Condition="'$(ManagedDir)' == ''">$(GameRoot)/7DaysToDie_Data/Managed</ManagedDir>
   </PropertyGroup>
 
   <ItemGroup Condition="'$(GITHUB_ACTIONS)' != 'true'">
@@ -45,10 +47,11 @@
       <HintPath>$(ManagedDir)/UnityEngine.CoreModule.dll</HintPath>
       <Private>False</Private>
     </Reference>
-    <Reference Include="0Harmony">
+    <Reference Include="0Harmony" Condition="Exists('$(ManagedDir)/0Harmony.dll')">
       <HintPath>$(ManagedDir)/0Harmony.dll</HintPath>
       <Private>False</Private>
     </Reference>
+    <PackageReference Include="Lib.Harmony" Version="2.2.2" Condition="!Exists('$(ManagedDir)/0Harmony.dll')" />
   </ItemGroup>
 
   <!--

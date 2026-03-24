@@ -1,5 +1,6 @@
 using HarmonyLib;
 using System;
+using TitlesSystem;
 
 namespace TitlesSystem.Patches
 {
@@ -28,7 +29,7 @@ namespace TitlesSystem.Patches
                 // A null or missing source means environmental death — skip
                 if (_dmResponse.Source == null) return;
 
-                int killerEntityId = _dmResponse.Source.BoundEntityId;
+                int killerEntityId = GameApiCompat.GetKillerEntityId(_dmResponse.Source);
                 if (killerEntityId < 0) return;
 
                 // Confirm the killer is a player
@@ -38,10 +39,13 @@ namespace TitlesSystem.Patches
                 if (killerPlayer == null) return;
 
                 // Resolve ClientInfo to get the stable platform player ID
-                ClientInfo clientInfo = ConnectionManager.Instance?.Clients?.GetForEntityId(killerEntityId);
+                ClientInfo clientInfo = GameApiCompat.GetClientInfoByEntityId(killerEntityId);
                 if (clientInfo == null) return;
 
-                RankManager.Instance.OnZombieKilled(killerEntityId, clientInfo.playerId);
+                string killerPlayerId = GameApiCompat.GetPlayerId(clientInfo);
+                if (string.IsNullOrEmpty(killerPlayerId)) return;
+
+                RankManager.Instance.OnZombieKilled(killerEntityId, killerPlayerId);
             }
             catch (Exception e)
             {

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using TitlesSystem;
 
 namespace TitlesSystem.Commands
 {
@@ -14,17 +15,17 @@ namespace TitlesSystem.Commands
     /// </summary>
     public class ConsoleCmdRank : ConsoleCmdAbstract
     {
-        protected override string[] getCommands()
+        public override string[] getCommands()
         {
             return new[] { "rank", "title", "ranks" };
         }
 
-        protected override string getDescription()
+        public override string getDescription()
         {
             return "Manage and view player ranks in the TitlesSystem. Type 'help rank' for details.";
         }
 
-        protected override string getHelp()
+        public override string getHelp()
         {
             return
                 "Usage:\n" +
@@ -107,7 +108,8 @@ namespace TitlesSystem.Commands
                 return;
             }
 
-            var data = RankManager.Instance.GetPlayerData(target.playerId);
+            string targetId = GameApiCompat.GetPlayerId(target);
+            var data = RankManager.Instance.GetPlayerData(targetId);
             if (data == null)
             {
                 Output($"[TitlesSystem] No rank data found for '{target.playerName}'. They may not have logged in yet.");
@@ -153,13 +155,14 @@ namespace TitlesSystem.Commands
                 return;
             }
 
-            if (!RankManager.Instance.SetPlayerKills(target.playerId, kills))
+            string targetId = GameApiCompat.GetPlayerId(target);
+            if (!RankManager.Instance.SetPlayerKills(targetId, kills))
             {
                 Output($"[TitlesSystem] Could not update kills — '{target.playerName}' has no rank data loaded.");
                 return;
             }
 
-            var data = RankManager.Instance.GetPlayerData(target.playerId);
+            var data = RankManager.Instance.GetPlayerData(targetId);
             var rank = RankManager.Instance.Ranks[data.CurrentRankIndex];
             Output($"[TitlesSystem] Set {target.playerName}'s kills to {kills} \u2192 Rank: [{rank.Title}]");
         }
@@ -181,7 +184,7 @@ namespace TitlesSystem.Commands
             var entries = new List<(string name, int kills, string title)>();
             foreach (var client in clientList)
             {
-                var data = RankManager.Instance.GetPlayerData(client.playerId);
+                var data = RankManager.Instance.GetPlayerData(GameApiCompat.GetPlayerId(client));
                 if (data != null)
                     entries.Add((data.OriginalName, data.ZombieKills, RankManager.Instance.Ranks[data.CurrentRankIndex].ShortTitle));
             }
@@ -206,7 +209,7 @@ namespace TitlesSystem.Commands
         private static ClientInfo FindClientByNameOrId(string nameOrId)
         {
             if (int.TryParse(nameOrId, out int entityId))
-                return ConnectionManager.Instance?.Clients?.GetForEntityId(entityId);
+                return GameApiCompat.GetClientInfoByEntityId(entityId);
 
             var clientList = ConnectionManager.Instance?.Clients?.list;
             if (clientList == null) return null;
@@ -226,9 +229,7 @@ namespace TitlesSystem.Commands
         /// </summary>
         private static bool IsAdmin(CommandSenderInfo sender)
         {
-            if (sender.RemoteClientInfo == null) return true;
-            int level = GameManager.Instance.adminTools.GetUserPermissionLevel(sender.RemoteClientInfo.playerId);
-            return level < 1000;
+            return GameApiCompat.IsAdmin(sender);
         }
 
         /// <summary>
