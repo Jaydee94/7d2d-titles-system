@@ -251,6 +251,85 @@ namespace TitlesSystem
             }
         }
 
+        public static void ChatMessageToClient(ClientInfo clientInfo, string message)
+        {
+            if (clientInfo == null || string.IsNullOrEmpty(message)) return;
+
+            int entityId = GetEntityId(clientInfo);
+            if (entityId < 0) return;
+
+            object gm = GameManager.Instance;
+            if (gm == null) return;
+
+            MethodInfo[] methods = gm.GetType().GetMethods(BindingFlags.Public | BindingFlags.Instance);
+            foreach (var method in methods)
+            {
+                if (!string.Equals(method.Name, "ChatMessageServer", StringComparison.Ordinal)) continue;
+
+                ParameterInfo[] p = method.GetParameters();
+                if (p.Length != 7) continue;
+
+                try
+                {
+                    var recipients = new System.Collections.Generic.List<int> { entityId };
+                    object[] args;
+                    if (p[4].ParameterType == typeof(string))
+                    {
+                        // Old signature:
+                        // (ClientInfo, EChatType, int, string, string, bool, List<int>)
+                        args = new object[] { null, EChatType.Whisper, entityId, message, "TitlesSystem", false, recipients };
+                    }
+                    else
+                    {
+                        // New signature:
+                        // (ClientInfo, EChatType, int, string, List<int>, EMessageSender, BbCodeSupportMode)
+                        object senderMode = p[5].ParameterType.IsValueType
+                            ? Activator.CreateInstance(p[5].ParameterType)
+                            : null;
+                        object bbMode = p[6].ParameterType.IsValueType
+                            ? Activator.CreateInstance(p[6].ParameterType)
+                            : null;
+                        args = new object[] { null, EChatType.Whisper, entityId, message, recipients, senderMode, bbMode };
+                    }
+
+                    method.Invoke(gm, args);
+                    return;
+                }
+                catch
+                {
+                    // Try alternative argument combinations before moving on.
+                    try
+                    {
+                        var recipients = new System.Collections.Generic.List<int> { entityId };
+                        object[] fallbackArgs;
+                        if (p[4].ParameterType == typeof(string))
+                        {
+                            // Old signature fallback to Global and senderless server output.
+                            fallbackArgs = new object[] { null, EChatType.Global, -1, message, "TitlesSystem", false, recipients };
+                        }
+                        else
+                        {
+                            // New signature fallback to Global and senderless server output.
+                            object senderMode = p[5].ParameterType.IsValueType
+                                ? Activator.CreateInstance(p[5].ParameterType)
+                                : null;
+                            object bbMode = p[6].ParameterType.IsValueType
+                                ? Activator.CreateInstance(p[6].ParameterType)
+                                : null;
+                            fallbackArgs = new object[] { null, EChatType.Global, -1, message, recipients, senderMode, bbMode };
+                        }
+
+                        method.Invoke(gm, fallbackArgs);
+                        return;
+                    }
+                    catch
+                    {
+                        // Try next overload if this one fails.
+                    }
+                }
+            }
+        }
+
         public static void MarkPlayerNameDirty(EntityPlayer player)
         {
             if (player == null) return;
