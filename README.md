@@ -321,7 +321,7 @@ After `rank set <player> <kills>`:
 
 ## Testing Locally (Windows 11)
 
-These steps walk through the same test cycle on a Windows 11 machine using PowerShell and the Steam client.
+These steps walk through the same test cycle on a Windows 11 machine. A helper script (`deploy-windows.ps1`) handles the build and deploy steps for you.
 
 ### Prerequisites
 
@@ -336,7 +336,6 @@ These steps walk through the same test cycle on a Windows 11 machine using Power
    ```
    C:\Program Files (x86)\Steam\steamapps\common\7 Days to Die Dedicated Server\
    ```
-   Note this path — it is `<ServerRoot>` in the steps below.
 
 > **Tip:** You can also use [SteamCMD for Windows](https://developer.valvesoftware.com/wiki/SteamCMD) for a headless install:
 > ```powershell
@@ -346,42 +345,33 @@ These steps walk through the same test cycle on a Windows 11 machine using Power
 >          +quit
 > ```
 
-### 2. Build the Mod
+### 2. Build and Deploy with `deploy-windows.ps1`
 
 Open **PowerShell** in the repository root and run:
 
 ```powershell
-cd TitlesSystem
-dotnet build -p:GameRoot="C:\Program Files (x86)\Steam\steamapps\common\7 Days to Die Dedicated Server" -c Release
+# Auto-detects the server under the default Steam path
+.\deploy-windows.ps1
+
+# Or provide an explicit server path
+.\deploy-windows.ps1 -ServerRoot "C:\7dtd"
+
+# Build, deploy, and start the server in one step
+.\deploy-windows.ps1 -StartServer
 ```
 
-The compiled DLL is written to:
-```
-TitlesSystem\bin\Release\TitlesSystem.dll
-```
+The script:
+- Auto-detects your server installation from common Steam paths
+- Builds the mod with game DLLs (or falls back to CI stubs if DLLs aren't found)
+- Copies the DLL, `ModInfo.xml`, and `TitlesRanks.xml` into `<ServerRoot>\Mods\TitlesSystem\`
+- Optionally launches the dedicated server (`-StartServer`)
 
-> **If you don't have the game DLLs locally**, build using the CI stubs instead (no game installation required):
+> **First run only:** PowerShell may block scripts by default. Run this once to allow local scripts:
 > ```powershell
-> $env:GITHUB_ACTIONS = "true"
-> dotnet build TitlesSystem\TitlesSystem.csproj -c Release
+> Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
 > ```
 
-### 3. Deploy the Mod
-
-Copy the mod files into the server's `Mods\` directory with PowerShell:
-
-```powershell
-$serverRoot = "C:\Program Files (x86)\Steam\steamapps\common\7 Days to Die Dedicated Server"
-$modDest    = "$serverRoot\Mods\TitlesSystem"
-
-New-Item -ItemType Directory -Force -Path "$modDest\Config" | Out-Null
-
-Copy-Item "TitlesSystem\bin\Release\TitlesSystem.dll" -Destination $modDest
-Copy-Item "TitlesSystem\ModInfo.xml"                  -Destination $modDest
-Copy-Item "TitlesSystem\Config\TitlesRanks.xml"       -Destination "$modDest\Config"
-```
-
-The resulting layout:
+The resulting mod layout:
 
 ```
 <ServerRoot>\Mods\TitlesSystem\
@@ -391,7 +381,9 @@ The resulting layout:
     └── TitlesRanks.xml
 ```
 
-### 4. Start the Server and Verify the Mod Loads
+### 3. Start the Server and Verify the Mod Loads
+
+If you did not pass `-StartServer` above:
 
 ```powershell
 cd "C:\Program Files (x86)\Steam\steamapps\common\7 Days to Die Dedicated Server"
@@ -407,7 +399,7 @@ Watch the console window for:
 [TitlesSystem] Titles System mod initialized successfully.
 ```
 
-### 5. Test with Console Commands
+### 4. Test with Console Commands
 
 The server opens a console window on Windows. You can also connect via Telnet if enabled in `serverconfig.xml`. Run:
 
@@ -418,7 +410,7 @@ rank set YourSteamName 1000
 rank top 10
 ```
 
-### 6. Iterate Without Restarting the Server
+### 5. Iterate Without Restarting the Server
 
 > The server **must be restarted** to pick up a rebuilt DLL. You can edit
 > `Config\TitlesRanks.xml` without recompiling — only a server restart is needed
@@ -428,17 +420,19 @@ Typical dev loop on Windows:
 
 ```powershell
 # 1. Edit source files in your editor
-# 2. Rebuild
-cd C:\dev\7d2d-titles-system\TitlesSystem
-dotnet build -p:GameRoot="C:\Program Files (x86)\Steam\steamapps\common\7 Days to Die Dedicated Server" -c Release
-# 3. Stop the dedicated server (close the window or Ctrl+C)
-# 4. Redeploy
-Copy-Item "bin\Release\TitlesSystem.dll" `
-    -Destination "C:\Program Files (x86)\Steam\steamapps\common\7 Days to Die Dedicated Server\Mods\TitlesSystem"
-# 5. Restart the server and test with 'rank set'
+# 2. Stop the dedicated server (close the window or Ctrl+C)
+# 3. Rebuild and redeploy in one command
+.\deploy-windows.ps1
+# 4. Start the server again and test with 'rank set'
 ```
 
-### 7. Confirm Rank Display In-Game
+Or combine deploy and start:
+
+```powershell
+.\deploy-windows.ps1 -StartServer
+```
+
+### 6. Confirm Rank Display In-Game
 
 After `rank set <player> <kills>`:
 - The player's name above their character model updates to `[ShortTitle] PlayerName`.
