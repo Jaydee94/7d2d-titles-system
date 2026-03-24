@@ -1,0 +1,65 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <AssemblyName>TitlesSystem</AssemblyName>
+    <RootNamespace>TitlesSystem</RootNamespace>
+    <TargetFramework>net48</TargetFramework>
+    <LangVersion>7.3</LangVersion>
+    <Nullable>disable</Nullable>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release</OutputPath>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
+  </PropertyGroup>
+
+  <!--
+    7 Days to Die game DLL references.
+    Adjust GAME_ROOT to your server/client installation path.
+
+    Linux dedicated server default:
+      ~/.steam/SteamApps/common/7 Days to Die Dedicated Server
+    Windows default:
+      C:\Program Files (x86)\Steam\steamapps\common\7 Days To Die
+
+    IMPORTANT: Private=False prevents the game DLLs from being copied
+    into the mod output directory (the game already loads them).
+  -->
+  <PropertyGroup>
+    <GameRoot Condition="'$(GameRoot)' == '' and Exists('/home/steam/.steam/SteamApps/common/7 Days to Die Dedicated Server')">/home/steam/.steam/SteamApps/common/7 Days to Die Dedicated Server</GameRoot>
+    <GameRoot Condition="'$(GameRoot)' == '' and Exists('/opt/7dtd')">/opt/7dtd</GameRoot>
+    <GameRoot Condition="'$(GameRoot)' == ''">C:\Program Files (x86)\Steam\steamapps\common\7 Days To Die</GameRoot>
+    <ManagedDir>$(GameRoot)/7DaysToDie_Data/Managed</ManagedDir>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Reference Include="Assembly-CSharp">
+      <HintPath>$(ManagedDir)/Assembly-CSharp.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="UnityEngine">
+      <HintPath>$(ManagedDir)/UnityEngine.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="UnityEngine.CoreModule">
+      <HintPath>$(ManagedDir)/UnityEngine.CoreModule.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="0Harmony">
+      <HintPath>$(ManagedDir)/0Harmony.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+  </ItemGroup>
+
+  <!--
+    Post-build: copy the compiled DLL to the game's Mods folder so changes
+    take effect immediately during development.  Set MODS_DIR to override.
+  -->
+  <Target Name="CopyToMods" AfterTargets="Build" Condition="'$(MODS_DIR)' != ''">
+    <Copy SourceFiles="$(OutputPath)/$(AssemblyName).dll"
+          DestinationFolder="$(MODS_DIR)/TitlesSystem"
+          SkipUnchangedFiles="true" />
+    <Message Text="[TitlesSystem] Copied DLL to $(MODS_DIR)/TitlesSystem" Importance="High" />
+  </Target>
+
+</Project>

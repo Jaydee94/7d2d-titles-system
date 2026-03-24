@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    TitlesRanks.xml - Rank and Title Definitions for the 7D2D Titles System
+    
+    Each <Rank> requires the following attributes:
+      kills       - Minimum zombie kills required to achieve this rank
+      title       - The full display title shown in rank-up announcements
+      shortTitle  - Abbreviated title displayed above the player model in-game
+    
+    Ranks MUST be ordered by ascending kill count.
+    The first rank (kills="0") is the default starting rank.
+-->
+<TitlesConfig>
+
+    <Settings>
+        <!-- Display the short rank title in brackets above the player's name in-game -->
+        <ShowRankInName value="true"/>
+
+        <!-- Broadcast a global server announcement when a player ranks up -->
+        <AnnounceRankUp value="true"/>
+
+        <!-- Save player rank data to disk every N minutes (0 = only on disconnect/event) -->
+        <AutoSaveIntervalMinutes value="5"/>
+    </Settings>
+
+    <Ranks>
+        <!-- Starter rank - everyone begins here -->
+        <Rank kills="0"      title="Noob of the Apocalypse"      shortTitle="Noob"/>
+
+        <!-- Getting started -->
+        <Rank kills="10"     title="Rookie Corpse Kicker"         shortTitle="Rookie"/>
+        <Rank kills="25"     title="Certified Zombie Puncher"     shortTitle="Puncher"/>
+        <Rank kills="50"     title="Exception: ZombieNotFound"    shortTitle="Exception"/>
+
+        <!-- Intermediate -->
+        <Rank kills="100"    title="Stack Overflow Survivor"      shortTitle="Overflow"/>
+        <Rank kills="200"    title="Senior Undead Debugger"       shortTitle="Debugger"/>
+        <Rank kills="350"    title="printf('I Survived')"         shortTitle="printf"/>
+
+        <!-- Advanced -->
+        <Rank kills="500"    title="Zombie-Slaying Architect"     shortTitle="Architect"/>
+        <Rank kills="750"    title="Runtime Error Exterminator"   shortTitle="Exterminator"/>
+        <Rank kills="1000"   title="10x Apocalypse Developer"     shortTitle="10xDev"/>
+
+        <!-- Expert -->
+        <Rank kills="1500"   title="sudo killall zombies"         shortTitle="sudo"/>
+        <Rank kills="2500"   title="chmod 000 /undead"            shortTitle="chmod000"/>
+        <Rank kills="4000"   title="Segmentation Fault Survivor"  shortTitle="SegFault"/>
+
+        <!-- Legend -->
+        <Rank kills="6000"   title="Null Pointer of Death"        shortTitle="nullptr"/>
+        <Rank kills="9000"   title="It's Over 9000 (Kills)"       shortTitle="Over9000"/>
+        <Rank kills="15000"  title="git push --force Apocalypse"  shortTitle="force-push"/>
+
+        <!-- Mythical -->
+        <Rank kills="25000"  title="Legendary Exception Handler"  shortTitle="Legend"/>
+        <Rank kills="50000"  title="The Undefined Behavior"       shortTitle="Undefined"/>
+        <Rank kills="100000" title="God.getInstance()"            shortTitle="God"/>
+    </Ranks>
+
+</TitlesConfig>
