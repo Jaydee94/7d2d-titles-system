@@ -2,7 +2,7 @@
 <xml>
     <Name value="TitlesSystem"/>
     <DisplayName value="7D2D Titles System"/>
-    <Version value="1.1.0"/>
+    <Version value="1.0.0"/>
     <Author value="Jaydee94"/>
     <Description value="A server-side rank and titles system for 7 Days to Die. Players earn apocalyptic ranks by slaying the undead horde! Compatible with 7DTD v2.5."/>
     <Website value="https://github.com/Jaydee94/7d2d-titles-system"/>
