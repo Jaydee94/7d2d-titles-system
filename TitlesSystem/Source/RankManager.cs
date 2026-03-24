@@ -299,8 +299,21 @@ namespace TitlesSystem
         {
             if (!_playerData.TryGetValue(playerId, out var data)) return false;
 
+            int oldRankIndex = data.CurrentRankIndex;
             data.ZombieKills = Math.Max(0, kills);
             data.CurrentRankIndex = ComputeRankIndex(data.ZombieKills);
+
+            if (data.CurrentRankIndex > oldRankIndex)
+            {
+                var newRank = _ranks[data.CurrentRankIndex];
+                Log.Out($"[TitlesSystem] '{data.OriginalName}' ranked up to [{newRank.Title}] via admin set with {data.ZombieKills} kills.");
+
+                if (_announceRankUp)
+                {
+                    string message = $"[TitlesSystem] {data.OriginalName} has been promoted to [{newRank.Title}]! ({data.ZombieKills} zombies slain)";
+                    GameApiCompat.ChatMessageGlobal(message);
+                }
+            }
 
             ClientInfo clientInfo = GetClientInfo(playerId);
             if (clientInfo != null)
