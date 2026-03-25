@@ -52,7 +52,9 @@ namespace TitlesSystem.Patches
                 // Track player deaths
                 else if (__instance is EntityPlayer deadPlayer)
                 {
-                    int deadEntityId = deadPlayer.entityId;
+                    int deadEntityId = GetEntityIdCompat(deadPlayer);
+                    if (deadEntityId < 0) return;
+
                     ClientInfo deadClientInfo = GameApiCompat.GetClientInfoByEntityId(deadEntityId);
                     if (deadClientInfo == null) return;
 
@@ -66,6 +68,30 @@ namespace TitlesSystem.Patches
             {
                 Log.Error($"[TitlesSystem] EntityDeathPatch error: {e.Message}");
             }
+        }
+
+        private static int GetEntityIdCompat(object entity)
+        {
+            if (entity == null) return -1;
+
+            try
+            {
+                var type = entity.GetType();
+
+                var field = type.GetField("entityId");
+                if (field != null && field.GetValue(entity) is int fieldId)
+                    return fieldId;
+
+                var prop = type.GetProperty("entityId");
+                if (prop != null && prop.GetValue(entity, null) is int propId)
+                    return propId;
+            }
+            catch
+            {
+                // Best-effort fallback.
+            }
+
+            return -1;
         }
 
         /// <summary>

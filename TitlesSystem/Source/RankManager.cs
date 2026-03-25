@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Xml;
 using System.Xml.Serialization;
 
@@ -351,22 +352,25 @@ namespace TitlesSystem
                     // Build message header
                     List<string> leaderboardLines = new List<string>
                     {
-                        "═══════════════════════════════════════",
-                        "        🏆 TOP PLAYERS LEADERBOARD 🏆",
-                        "═══════════════════════════════════════"
+                        "=======================================",
+                        "      TOP PLAYERS LEADERBOARD",
+                        "======================================="
                     };
 
                     // Add player lines
                     int position = 1;
                     foreach (var player in topPlayers)
                     {
-                        string rank = position <= _ranks.Count ? _ranks[player.CurrentRankIndex].Title : "Unknown";
-                        string line = $"#{position:D2} | {player.Name,-16} | {player.ZombieKills:D6} kills | Rank: {rank}";
+                        string rank =
+                            player.CurrentRankIndex >= 0 && player.CurrentRankIndex < _ranks.Count
+                                ? _ranks[player.CurrentRankIndex].Title
+                                : "Unknown";
+                        string line = $"#{position:D2} | {player.OriginalName,-16} | {player.ZombieKills:D6} kills | Rank: {rank}";
                         leaderboardLines.Add(line);
                         position++;
                     }
 
-                    leaderboardLines.Add("═══════════════════════════════════════");
+                    leaderboardLines.Add("=======================================");
 
                     // Broadcast each line to all players
                     foreach (var line in leaderboardLines)
@@ -421,7 +425,7 @@ namespace TitlesSystem
 
             ClientInfo clientInfo = GetClientInfo(playerId);
             if (clientInfo != null)
-                UpdatePlayerDisplayName(clientInfo.entityId, data);
+                UpdatePlayerDisplayName(GameApiCompat.GetEntityId(clientInfo), data);
 
             SavePlayerData(data);
             return true;
@@ -473,9 +477,13 @@ namespace TitlesSystem
                 World world = GameManager.Instance?.World;
                 if (world != null)
                 {
-                    EntityPlayer player = world.Players.dict.TryGetValue(clientInfo.entityId, out var p) ? p : null;
-                    if (player != null && !string.IsNullOrEmpty(player.entityName))
-                        return player.entityName;
+                    int entityId = GameApiCompat.GetEntityId(clientInfo);
+                    if (entityId >= 0)
+                    {
+                        EntityPlayer player = world.Players.dict.TryGetValue(entityId, out var p) ? p : null;
+                        if (player != null && !string.IsNullOrEmpty(player.entityName))
+                            return player.entityName;
+                    }
                 }
             }
             catch { /* fall through to clientInfo fallback */ }
