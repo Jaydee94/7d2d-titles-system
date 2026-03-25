@@ -10,8 +10,9 @@ namespace TitlesSystem.Commands
     /// Usage (server console / telnet / CSMM):
     ///   rank                       — List all rank tiers
     ///   rank check [name/entityId] — Show a player's current rank
-    ///   rank set &lt;name/entityId&gt; &lt;kills&gt; — Forcibly set a player's kill count (admin)
-    ///   rank top [n]               — Show top-N players by kills (default 10)
+    ///   rank set <name/entityId> <kills> — Forcibly set a player's kill count (admin)
+    ///   rank top [n]               — Show top-N online players (default 10)
+    ///   rank top all [n]           — Show top-N all-time players from disk (default 10)
     /// </summary>
     public class ConsoleCmdRank : ConsoleCmdAbstract
     {
@@ -32,7 +33,8 @@ namespace TitlesSystem.Commands
                 "  rank                       — List all rank tiers and their kill thresholds\n" +
                 "  rank check [name/entityId] — Show a player's current rank (defaults to self)\n" +
                 "  rank set <name/entityId> <kills> — Forcibly set kill count (admin only)\n" +
-                "  rank top [n]               — Show top-N players by kill count (default 10)\n";
+                "  rank top [n]               — Show top-N online players by kill count (default 10)\n" +
+                "  rank top all [n]           — Show top-N all-time players from disk (default 10)\n";
         }
 
         public override void Execute(List<string> _params, CommandSenderInfo _senderInfo)
@@ -236,28 +238,70 @@ namespace TitlesSystem.Commands
         private static void CmdTopPlayers(List<string> _params, CommandSenderInfo sender)
         {
             int n = 10;
-            if (_params.Count > 1) int.TryParse(_params[1], out n);
+            bool showAll = false;
+
+            // Parse parameters: rank top [all|n]
+            if (_params.Count > 1)
+            {
+                if (string.Equals(_params[1], "all", StringComparison.OrdinalIgnoreCase))
+                {
+                    showAll = true;
+                    if (_params.Count > 2)
+                        int.TryParse(_params[2], out n);
+                }
+                else
+                {
+                    int.TryParse(_params[1], out n);
+                }
+            }
+
             n = Math.Max(1, Math.Min(n, 50));
 
-            // Collect all connected players who have rank data
-            var clientList = ConnectionManager.Instance?.Clients?.list;
-            if (clientList == null || clientList.Count == 0)
-            {
-                Output("[TitlesSystem] No players currently online.", sender);
-                return;
-            }
-
             var entries = new List<(string name, int kills, string title)>();
-            foreach (var client in clientList)
+
+            if (showAll)
             {
-                var data = RankManager.Instance.GetPlayerData(GameApiCompat.GetPlayerId(client));
-                if (data != null)
-                    entries.Add((data.OriginalName, data.ZombieKills, RankManager.Instance.Ranks[data.CurrentRankIndex].ShortTitle));
+                // Load all player data from disk (online and offline)
+                var allPlayers = RankManager.Instance.GetAllPlayerData();
+                if (allPlayers.Count == 0)
+                {
+                    Output("[TitlesSystem] No player records found.", sender);
+                    return;
+                }
+
+                foreach (var data in allPlayers)
+                {
+                    var rank = RankManager.Instance.Ranks[data.CurrentRankIndex];
+                    entries.Add((data.OriginalName, data.ZombieKills, rank.ShortTitle));
+                }
+
+                entries.Sort((a, b) => b.kills.CompareTo(a.kills));
+                Output($"=== All-Time Top {Math.Min(n, entries.Count)} Players by Zombie Kills ===", sender);
+            }
+            else
+            {
+                // Show only online players
+                var clientList = ConnectionManager.Instance?.Clients?.list;
+                if (clientList == null || clientList.Count == 0)
+                {
+                    Output("[TitlesSystem] No players currently online. Use 'rank top all' to see all-time leaderboard.", sender);
+                    return;
+                }
+
+                foreach (var client in clientList)
+                {
+                    var data = RankManager.Instance.GetPlayerData(GameApiCompat.GetPlayerId(client));
+                    if (data != null)
+                    {
+                        var rank = RankManager.Instance.Ranks[data.CurrentRankIndex];
+                        entries.Add((data.OriginalName, data.ZombieKills, rank.ShortTitle));
+                    }
+                }
+
+                entries.Sort((a, b) => b.kills.CompareTo(a.kills));
+                Output($"=== Top {Math.Min(n, entries.Count)} Online Players by Zombie Kills ===", sender);
             }
 
-            entries.Sort((a, b) => b.kills.CompareTo(a.kills));
-
-            Output($"=== Top {Math.Min(n, entries.Count)} Players by Zombie Kills ===", sender);
             for (int i = 0; i < Math.Min(n, entries.Count); i++)
             {
                 var (name, kills, title) = entries[i];

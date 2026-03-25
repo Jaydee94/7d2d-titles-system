@@ -434,6 +434,44 @@ namespace TitlesSystem
             }
         }
 
+        /// <summary>
+        /// Returns all player data from disk, including offline players.
+        /// </summary>
+        public List<PlayerRankData> GetAllPlayerData()
+        {
+            var allPlayers = new List<PlayerRankData>();
+
+            if (_dataPath == null || !Directory.Exists(_dataPath))
+                return allPlayers;
+
+            try
+            {
+                var xmlFiles = Directory.GetFiles(_dataPath, "*.xml");
+                foreach (var file in xmlFiles)
+                {
+                    try
+                    {
+                        using (var reader = new StreamReader(file, System.Text.Encoding.UTF8))
+                        {
+                            var data = (PlayerRankData)PlayerDataSerializer.Deserialize(reader);
+                            if (data != null)
+                                allPlayers.Add(data);
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        Log.Warning($"[TitlesSystem] Failed to load player data from {Path.GetFileName(file)}: {e.Message}");
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                Log.Error($"[TitlesSystem] Failed to read player data directory: {e.Message}");
+            }
+
+            return allPlayers;
+        }
+
         private PlayerRankData LoadPlayerData(string playerId)
         {
             if (_dataPath == null) return null;
