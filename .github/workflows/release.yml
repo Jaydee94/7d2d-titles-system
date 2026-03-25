@@ -8,6 +8,7 @@ name: Build and Release
       - 'TitlesSystem/**'
       - 'libs/**'
       - 'TitlesSystem.Tests/**'
+      - '.github/workflows/release.yml'
 
 permissions:
   contents: write
