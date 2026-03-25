@@ -222,6 +222,8 @@ namespace TitlesSystem
                 _playerData[playerId] = data;
             }
 
+            // Mark session start
+            data.SessionJoinTime = DateTime.UtcNow.ToString("o");
             data.Touch();
             UpdatePlayerDisplayName(GameApiCompat.GetEntityId(clientInfo), data);
 
@@ -241,6 +243,14 @@ namespace TitlesSystem
 
             if (_playerData.TryGetValue(playerId, out var data))
             {
+                // Add session playtime
+                if (!string.IsNullOrEmpty(data.SessionJoinTime) &&
+                    DateTime.TryParse(data.SessionJoinTime, out var sessionStart))
+                {
+                    long sessionSeconds = (long)(DateTime.UtcNow - sessionStart).TotalSeconds;
+                    data.AddSessionTime(sessionSeconds);
+                }
+
                 data.Touch();
                 SavePlayerData(data);
                 Log.Out($"[TitlesSystem] Saved rank data for '{data.OriginalName}'.");
@@ -251,11 +261,13 @@ namespace TitlesSystem
         /// Called when a zombie is killed by a player. Increments the kill count
         /// and triggers a rank-up if the new kill count meets the next threshold.
         /// </summary>
-        public void OnZombieKilled(int killerEntityId, string killerPlayerId)
+        public void OnZombieKilled(int killerEntityId, string killerPlayerId, string weaponId = "unknown")
         {
             if (!_playerData.TryGetValue(killerPlayerId, out var data)) return;
 
-            data.ZombieKills++;
+            int oldKills = data.ZombieKills;
+            data.RecordKill(weaponId);
+
             int newRankIndex = ComputeRankIndex(data.ZombieKills);
 
             if (newRankIndex > data.CurrentRankIndex)
@@ -273,6 +285,15 @@ namespace TitlesSystem
             }
 
             UpdatePlayerDisplayName(killerEntityId, data);
+        }
+
+        /// <summary>
+        /// Called when a player dies. Tracks death count and resets survival streak.
+        /// </summary>
+        public void OnPlayerDied(string playerId)
+        {
+            if (!_playerData.TryGetValue(playerId, out var data)) return;
+            data.RecordDeath();
         }
 
         /// <summary>
