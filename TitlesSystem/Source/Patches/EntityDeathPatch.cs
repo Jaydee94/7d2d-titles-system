@@ -52,7 +52,8 @@ namespace TitlesSystem.Patches
                 // Track player deaths
                 else if (__instance is EntityPlayer deadPlayer)
                 {
-                    ClientInfo deadClientInfo = GameApiCompat.GetClientInfoByEntityId(deadPlayer.entityId);
+                    int deadEntityId = deadPlayer.entityId;
+                    ClientInfo deadClientInfo = GameApiCompat.GetClientInfoByEntityId(deadEntityId);
                     if (deadClientInfo == null) return;
 
                     string deadPlayerId = GameApiCompat.GetPlayerId(deadClientInfo);
@@ -70,24 +71,25 @@ namespace TitlesSystem.Patches
         /// <summary>
         /// Extract weapon name from a DamageResponse's source.
         /// Returns "unknown" if unable to determine.
+        /// For now, returns weapon type based on damage source type.
         /// </summary>
         private static string ExtractWeaponId(DamageResponse dmResponse)
         {
             try
             {
-                if (dmResponse.Source is EntityPlayer player && player.inventory != null)
+                // Try to extract from damage source type
+                if (dmResponse.Source != null)
                 {
-                    // Try to get the held item
-                    var heldItem = player.inventory.GetHeldItem();
-                    if (heldItem != null && !string.IsNullOrEmpty(heldItem.Name))
-                        return heldItem.Name;
+                    string sourceName = dmResponse.Source.ToString();
+                    if (sourceName.Contains("Projectile"))
+                        return "projectile";
+                    if (sourceName.Contains("Fire"))
+                        return "fire";
+                    if (sourceName.Contains("Explosion"))
+                        return "explosive";
                 }
 
-                // Fallback: try to extract from damage type or source name
-                if (dmResponse.Source is EntityPlayer p2 && !string.IsNullOrEmpty(p2.entityName))
-                    return "melee"; // Assume melee if no item found
-
-                return "unknown";
+                return "weapon";
             }
             catch
             {
