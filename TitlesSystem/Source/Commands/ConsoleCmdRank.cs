@@ -121,14 +121,77 @@ namespace TitlesSystem.Commands
 
             var ranks = RankManager.Instance.Ranks;
             var current = ranks[data.CurrentRankIndex];
-            string nextInfo = data.CurrentRankIndex + 1 < ranks.Count
-                ? $" | Next rank: [{ranks[data.CurrentRankIndex + 1].ShortTitle}] at {ranks[data.CurrentRankIndex + 1].KillsRequired} kills ({ranks[data.CurrentRankIndex + 1].KillsRequired - data.ZombieKills} more needed)"
-                : " | MAX RANK ACHIEVED!";
 
-            Output($"=== Rank for {data.OriginalName} ===", sender);
-            Output($"  Title : [{current.ShortTitle}] {current.Title}", sender);
-            Output($"  Kills : {data.ZombieKills}{nextInfo}", sender);
-            Output($"  Rank  : #{data.CurrentRankIndex + 1} of {ranks.Count}", sender);
+            // Build rank progress info
+            string rankProgress = "";
+            if (data.CurrentRankIndex + 1 < ranks.Count)
+            {
+                var next = ranks[data.CurrentRankIndex + 1];
+                int needed = next.KillsRequired - data.ZombieKills;
+                rankProgress = $" | Next: {next.ShortTitle} ({needed} more kills)";
+            }
+            else
+            {
+                rankProgress = " | MAX RANK!";
+            }
+
+            // Calculate stats
+            double kdRatio = data.GetKDRatio();
+            double kpd = data.GetKillsPerDay();
+            double kph = data.GetKillsPerHour();
+            string playtimeStr = FormatPlaytime(data.PlaytimeSeconds);
+
+            // Header and rank
+            Output($"═══════════════════════════════════════════════════════════", sender);
+            Output($"=== {data.OriginalName} [{current.ShortTitle}] ===", sender);
+            Output($"=== {current.Title} ===", sender);
+            Output($"═══════════════════════════════════════════════════════════", sender);
+
+            // Core stats
+            Output($"Rank     : #{data.CurrentRankIndex + 1} of {ranks.Count}{rankProgress}", sender);
+            Output($"", sender);
+
+            // Kill stats
+            Output($"Kills    : {data.ZombieKills}", sender);
+            Output($"Deaths   : {data.Deaths}", sender);
+            Output($"K/D Ratio: {kdRatio:F2}", sender);
+            Output($"", sender);
+
+            // Streaks
+            Output($"Streaks  : Current {data.CurrentStreak} | Best {data.BestStreak}", sender);
+            Output($"", sender);
+
+            // Activity stats
+            Output($"Activity :", sender);
+            Output($"  Playtime       : {playtimeStr}", sender);
+            Output($"  Kills/Day      : {kpd:F1}", sender);
+            Output($"  Kills/Hour     : {kph:F1}", sender);
+
+            if (!string.IsNullOrEmpty(data.LastKillTime) && DateTime.TryParse(data.LastKillTime, out var lastKill))
+            {
+                TimeSpan timeSinceKill = DateTime.UtcNow - lastKill;
+                Output($"  Last Kill      : {FormatTimeAgo(timeSinceKill)} ago", sender);
+            }
+
+            Output($"", sender);
+
+            // Top weapons
+            if (data.WeaponKills.Count > 0)
+            {
+                Output($"Top Weapons:", sender);
+                var topWeapons = new List<WeaponKillData>(data.WeaponKills);
+                topWeapons.Sort((a, b) => b.Kills.CompareTo(a.Kills));
+
+                int weaponsToShow = Math.Min(5, topWeapons.Count);
+                for (int i = 0; i < weaponsToShow; i++)
+                {
+                    var w = topWeapons[i];
+                    double pct = (double)w.Kills / data.ZombieKills * 100;
+                    Output($"  {i + 1}. {w.WeaponId,-20} {w.Kills,5} kills ({pct:F1}%)", sender);
+                }
+            }
+
+            Output($"═══════════════════════════════════════════════════════════", sender);
         }
 
         private static void CmdSetKills(List<string> _params, CommandSenderInfo sender)
@@ -246,6 +309,38 @@ namespace TitlesSystem.Commands
             }
 
             SdtdConsole.Instance.Output(message);
+        }
+
+        /// <summary>
+        /// Formats seconds into human-readable playtime (e.g., "2d 5h 30m").
+        /// </summary>
+        private static string FormatPlaytime(long seconds)
+        {
+            if (seconds < 0) return "0m";
+
+            long days = seconds / 86400;
+            long hours = (seconds % 86400) / 3600;
+            long minutes = (seconds % 3600) / 60;
+
+            if (days > 0)
+                return $"{days}d {hours}h {minutes}m";
+            if (hours > 0)
+                return $"{hours}h {minutes}m";
+            return $"{minutes}m";
+        }
+
+        /// <summary>
+        /// Formats a TimeSpan into human-readable format (e.g., "2 days ago" or "5 minutes ago").
+        /// </summary>
+        private static string FormatTimeAgo(TimeSpan ts)
+        {
+            if (ts.TotalSeconds < 60)
+                return $"{(int)ts.TotalSeconds} seconds";
+            if (ts.TotalMinutes < 60)
+                return $"{(int)ts.TotalMinutes} minute(s)";
+            if (ts.TotalHours < 24)
+                return $"{(int)ts.TotalHours} hour(s)";
+            return $"{(int)ts.TotalDays} day(s)";
         }
     }
 }
