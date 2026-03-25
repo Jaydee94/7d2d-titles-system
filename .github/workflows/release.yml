@@ -64,13 +64,21 @@ jobs:
           SERVER_ROOT="${{ github.workspace }}/.7dtd-server"
           mkdir -p "$SERVER_ROOT"
 
-          ./steamcmd.sh \
-            +@sSteamCmdForcePlatformType windows \
+          if ! ./steamcmd.sh \
             +force_install_dir "$SERVER_ROOT" \
             +login anonymous \
             +app_info_update 1 \
             +app_update 294420 validate \
-            +quit
+            +quit; then
+            echo "First SteamCMD attempt failed; retrying with cleaned appmanifest..."
+            rm -f "$SERVER_ROOT/steamapps/appmanifest_294420.acf"
+            ./steamcmd.sh \
+              +force_install_dir "$SERVER_ROOT" \
+              +login anonymous \
+              +app_info_update 1 \
+              +app_update 294420 validate \
+              +quit
+          fi
 
           HAS_CLIENT_DLL=false
           HAS_SERVER_DLL=false
