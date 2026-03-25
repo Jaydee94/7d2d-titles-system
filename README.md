@@ -8,7 +8,8 @@ A **server-side** mod for **7 Days to Die** (v2.5) that gives players apocalypti
 - 🪧 **Name display** — short rank title shown in brackets above each player's model (`[Warlord] PlayerName`)
 - 📢 **Rank-up announcements** — global server chat notification when a player levels up
 - 💾 **Persistent data** — kill counts and ranks survive server restarts, stored per world save
-- 🛠️ **Admin commands** — check ranks, force-set kills, view a leaderboard
+- 📊 **Player statistics** — track deaths, kill streaks, playtime, K/D ratio, kills/hour, and weapon usage
+- 🛠️ **Admin commands** — check ranks, force-set kills, view leaderboards, and inspect detailed player stats
 - ⚙️ **Fully configurable** — add, remove, or rename ranks in `Config/TitlesRanks.xml` without recompiling
 - 🔒 **Server-side only** — no client-side installation required
 
@@ -73,15 +74,15 @@ Edit `Config/TitlesRanks.xml` to customise settings and ranks. Changes take effe
 
 ## Console Commands
 
-Available in the server console, via Telnet/RCON, or in-game chat (prefix with `/`).
+Available in the server console, via Telnet/RCON, or **in-game chat** (prefix with `/`).
 Aliases: `ranks`, `title`, `/ranks`, `/title`.
 
 | Command | Description |
 |---------|-------------|
-| `rank` | Show your current rank (in-game) or list all rank tiers (console) |
-| `rank check [name/entityId]` | Show your own or another player's rank |
-| `rank set <name/entityId> <kills>` | **Admin** — set a player's kill count |
-| `rank top [n]` | Show top 10 (or top N, max 50) players by kills |
+| `/rank` | Show your current rank (in chat) |
+| `/rank check [name]` | Show your or another player's rank and statistics |
+| `/rank set <name> <kills>` | **Admin** — set a player's kill count |
+| `/rank top [n]` | Show leaderboard — top 10 (or top N, max 50) players by kills |
 
 ## Building from Source
 
