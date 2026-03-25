@@ -4,6 +4,10 @@ name: Build and Release
   push:
     branches:
       - main
+    paths:
+      - 'TitlesSystem/**'
+      - 'libs/**'
+      - 'TitlesSystem.Tests/**'
 
 permissions:
   contents: write
