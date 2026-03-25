@@ -361,9 +361,9 @@ namespace TitlesSystem
                     {
                         string rank =
                             player.CurrentRankIndex >= 0 && player.CurrentRankIndex < _ranks.Count
-                                ? _ranks[player.CurrentRankIndex].Title
+                                ? _ranks[player.CurrentRankIndex].ShortTitle
                                 : "Unknown";
-                        string line = $"#{position:D2} | {player.OriginalName,-16} | {player.ZombieKills:D6} kills | Rank: {rank}";
+                        string line = $"#{position} {player.OriginalName} [{rank}] {player.ZombieKills}";
                         leaderboardLines.Add(line);
                         position++;
                     }

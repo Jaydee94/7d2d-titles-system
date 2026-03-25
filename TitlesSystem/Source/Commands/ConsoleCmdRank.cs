@@ -86,7 +86,7 @@ namespace TitlesSystem.Commands
                 string next = (i + 1 < ranks.Count)
                     ? $"next rank at {ranks[i + 1].KillsRequired} kills"
                     : "MAX RANK";
-                Output($"  {i + 1,2}. [{r.ShortTitle,10}] {r.Title} — {r.KillsRequired}+ kills ({next})", sender);
+                Output($"#{i + 1} [{r.ShortTitle}] {r.KillsRequired}+ ({next})", sender);
             }
         }
 
@@ -169,57 +169,33 @@ namespace TitlesSystem.Commands
             double kph = data.GetKillsPerHour();
             string playtimeStr = FormatPlaytime(data.PlaytimeSeconds);
 
-            // Header and rank
-            Output($"═══════════════════════════════════════════════════════════", sender);
-            Output($"=== {data.OriginalName} [{current.ShortTitle}] ===", sender);
-            Output($"=== {current.Title} ===", sender);
-            Output($"═══════════════════════════════════════════════════════════", sender);
-
-            // Core stats
-            Output($"Rank     : #{data.CurrentRankIndex + 1} of {ranks.Count}{rankProgress}", sender);
-            Output($"", sender);
-
-            // Kill stats
-            Output($"Kills    : {data.ZombieKills}", sender);
-            Output($"Deaths   : {data.Deaths}", sender);
-            Output($"K/D Ratio: {kdRatio:F2}", sender);
-            Output($"", sender);
-
-            // Streaks
-            Output($"Streaks  : Current {data.CurrentStreak} | Best {data.BestStreak}", sender);
-            Output($"", sender);
-
-            // Activity stats
-            Output($"Activity :", sender);
-            Output($"  Playtime       : {playtimeStr}", sender);
-            Output($"  Kills/Day      : {kpd:F1}", sender);
-            Output($"  Kills/Hour     : {kph:F1}", sender);
+            // Compact chat-friendly summary.
+            Output($"[TitlesSystem] {data.OriginalName} [{current.ShortTitle}] Rank #{data.CurrentRankIndex + 1}/{ranks.Count}{rankProgress}", sender);
+            Output($"Kills {data.ZombieKills} | Deaths {data.Deaths} | K/D {kdRatio:F2} | Streak {data.CurrentStreak}/{data.BestStreak}", sender);
+            Output($"Play {playtimeStr} | Kills/Day {kpd:F1} | Kills/Hour {kph:F1}", sender);
 
             if (!string.IsNullOrEmpty(data.LastKillTime) && DateTime.TryParse(data.LastKillTime, out var lastKill))
             {
                 TimeSpan timeSinceKill = DateTime.UtcNow - lastKill;
-                Output($"  Last Kill      : {FormatTimeAgo(timeSinceKill)} ago", sender);
+                Output($"Last kill: {FormatTimeAgo(timeSinceKill)} ago", sender);
             }
-
-            Output($"", sender);
 
             // Top weapons
             if (data.WeaponKills.Count > 0)
             {
-                Output($"Top Weapons:", sender);
                 var topWeapons = new List<WeaponKillData>(data.WeaponKills);
                 topWeapons.Sort((a, b) => b.Kills.CompareTo(a.Kills));
 
-                int weaponsToShow = Math.Min(5, topWeapons.Count);
+                int weaponsToShow = Math.Min(3, topWeapons.Count);
+                var parts = new List<string>(weaponsToShow);
                 for (int i = 0; i < weaponsToShow; i++)
                 {
                     var w = topWeapons[i];
-                    double pct = (double)w.Kills / data.ZombieKills * 100;
-                    Output($"  {i + 1}. {w.WeaponId,-20} {w.Kills,5} kills ({pct:F1}%)", sender);
+                    parts.Add($"{w.WeaponId}:{w.Kills}");
                 }
-            }
 
-            Output($"═══════════════════════════════════════════════════════════", sender);
+                Output($"Top weapons: {string.Join(", ", parts)}", sender);
+            }
         }
 
         private static void CmdSetKills(List<string> _params, CommandSenderInfo sender)
@@ -367,12 +343,12 @@ namespace TitlesSystem.Commands
             }
 
             string scope = showAll ? "All-Time" : "Online";
-            Output($"[TitlesSystem] Leaderboard {scope} #{displayStart}-#{endRank} (of {maxRank})", sender);
+            Output($"[TitlesSystem] LB {scope} #{displayStart}-#{endRank}/{maxRank}", sender);
 
             for (int rankIndex = displayStart - 1; rankIndex < endRank; rankIndex++)
             {
                 var (name, kills, title) = entries[rankIndex];
-                Output($"  #{rankIndex + 1,2} {name,-20} [{title,10}] {kills} kills", sender);
+                Output($"#{rankIndex + 1} {name} [{title}] {kills}", sender);
             }
         }
 
@@ -436,10 +412,44 @@ namespace TitlesSystem.Commands
         {
             if (sender.RemoteClientInfo != null)
             {
-                GameApiCompat.ChatMessageToClient(sender.RemoteClientInfo, message);
+                string compact = CompactForChat(message);
+                if (!string.IsNullOrEmpty(compact))
+                    GameApiCompat.ChatMessageToClient(sender.RemoteClientInfo, compact);
             }
 
             SdtdConsole.Instance.Output(message);
+        }
+
+        private static string CompactForChat(string message)
+        {
+            if (string.IsNullOrWhiteSpace(message)) return null;
+
+            string compact = message.Trim();
+
+            // Skip separator-only lines in in-game chat.
+            bool onlySeparators = true;
+            for (int i = 0; i < compact.Length; i++)
+            {
+                char c = compact[i];
+                if (c != '=' && c != '-' && c != '_' && c != ' ' && c != '|')
+                {
+                    onlySeparators = false;
+                    break;
+                }
+            }
+
+            if (onlySeparators) return null;
+
+            // Collapse excessive spaces.
+            while (compact.Contains("  "))
+                compact = compact.Replace("  ", " ");
+
+            // Keep messages within the small in-game chat window.
+            const int maxChatLen = 110;
+            if (compact.Length > maxChatLen)
+                compact = compact.Substring(0, maxChatLen - 3) + "...";
+
+            return compact;
         }
 
         /// <summary>
