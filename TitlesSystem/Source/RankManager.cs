@@ -34,6 +34,10 @@ namespace TitlesSystem
         private string _dataPath;
         private bool _showRankInName = true;
         private bool _announceRankUp = true;
+        private bool _showLeaderboardOnLogin = true;
+        private int _showLeaderboardIntervalHours = 6;
+        private int _leaderboardTopPlayers = 10;
+        private DateTime _lastLeaderboardTime = DateTime.MinValue;
 
         private static readonly XmlSerializer PlayerDataSerializer =
             new XmlSerializer(typeof(PlayerRankData));
@@ -116,6 +120,18 @@ namespace TitlesSystem
             XmlNode announceNode = doc.SelectSingleNode("/TitlesConfig/Settings/AnnounceRankUp");
             if (announceNode?.Attributes?["value"] != null)
                 bool.TryParse(announceNode.Attributes["value"].Value, out _announceRankUp);
+
+            XmlNode leaderboardLoginNode = doc.SelectSingleNode("/TitlesConfig/Settings/ShowLeaderboardOnLogin");
+            if (leaderboardLoginNode?.Attributes?["value"] != null)
+                bool.TryParse(leaderboardLoginNode.Attributes["value"].Value, out _showLeaderboardOnLogin);
+
+            XmlNode leaderboardIntervalNode = doc.SelectSingleNode("/TitlesConfig/Settings/ShowLeaderboardIntervalHours");
+            if (leaderboardIntervalNode?.Attributes?["value"] != null)
+                int.TryParse(leaderboardIntervalNode.Attributes["value"].Value, out _showLeaderboardIntervalHours);
+
+            XmlNode leaderboardTopNode = doc.SelectSingleNode("/TitlesConfig/Settings/LeaderboardTopPlayers");
+            if (leaderboardTopNode?.Attributes?["value"] != null)
+                int.TryParse(leaderboardTopNode.Attributes["value"].Value, out _leaderboardTopPlayers);
 
             // Read ranks
             _ranks.Clear();
@@ -228,6 +244,18 @@ namespace TitlesSystem
             UpdatePlayerDisplayName(GameApiCompat.GetEntityId(clientInfo), data);
 
             Log.Out($"[TitlesSystem] '{data.OriginalName}' spawned with rank [{_ranks[data.CurrentRankIndex].ShortTitle}] ({data.ZombieKills} kills).");
+
+            // Show leaderboard on login if enabled
+            if (_showLeaderboardOnLogin)
+            {
+                BroadcastLeaderboard();
+            }
+            // Or show if interval timer is ready
+            else if (_showLeaderboardIntervalHours > 0 && 
+                     DateTime.UtcNow.Subtract(_lastLeaderboardTime).TotalHours >= _showLeaderboardIntervalHours)
+            {
+                BroadcastLeaderboard();
+            }
         }
 
         /// <summary>
@@ -299,6 +327,61 @@ namespace TitlesSystem
         /// <summary>
         /// Saves all currently loaded player data to disk (e.g. on server shutdown).
         /// </summary>
+            /// <summary>
+            /// Broadcasts the top player leaderboard to all connected players.
+            /// </summary>
+            public void BroadcastLeaderboard()
+            {
+                try
+                {
+                    _lastLeaderboardTime = DateTime.UtcNow;
+
+                    var allPlayerData = GetAllPlayerData();
+                    if (allPlayerData.Count == 0)
+                    {
+                        return;
+                    }
+
+                    // Sort by zombie kills descending
+                    var topPlayers = allPlayerData
+                        .OrderByDescending(p => p.ZombieKills)
+                        .Take(_leaderboardTopPlayers)
+                        .ToList();
+
+                    // Build message header
+                    List<string> leaderboardLines = new List<string>
+                    {
+                        "═══════════════════════════════════════",
+                        "        🏆 TOP PLAYERS LEADERBOARD 🏆",
+                        "═══════════════════════════════════════"
+                    };
+
+                    // Add player lines
+                    int position = 1;
+                    foreach (var player in topPlayers)
+                    {
+                        string rank = position <= _ranks.Count ? _ranks[player.CurrentRankIndex].Title : "Unknown";
+                        string line = $"#{position:D2} | {player.Name,-16} | {player.ZombieKills:D6} kills | Rank: {rank}";
+                        leaderboardLines.Add(line);
+                        position++;
+                    }
+
+                    leaderboardLines.Add("═══════════════════════════════════════");
+
+                    // Broadcast each line to all players
+                    foreach (var line in leaderboardLines)
+                    {
+                        GameApiCompat.ChatMessageGlobal(line);
+                    }
+
+                    Log.Out($"[TitlesSystem] Leaderboard broadcast to all players.");
+                }
+                catch (Exception ex)
+                {
+                    Log.Error($"[TitlesSystem] Error broadcasting leaderboard: {ex.Message}");
+                }
+            }
+
         public void SaveAllPlayerData()
         {
             foreach (var data in _playerData.Values)

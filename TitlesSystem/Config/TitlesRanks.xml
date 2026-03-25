@@ -21,6 +21,15 @@
 
         <!-- Save player rank data to disk every N minutes (0 = only on disconnect/event) -->
         <AutoSaveIntervalMinutes value="5"/>
+
+        <!-- Show leaderboard in global chat when a player logs in -->
+        <ShowLeaderboardOnLogin value="true"/>
+
+        <!-- Show leaderboard in global chat every N in-game hours (0 = disabled) -->
+        <ShowLeaderboardIntervalHours value="6"/>
+
+        <!-- Number of top players to display in leaderboard (max 50) -->
+        <LeaderboardTopPlayers value="10"/>
     </Settings>
 
     <Ranks>
