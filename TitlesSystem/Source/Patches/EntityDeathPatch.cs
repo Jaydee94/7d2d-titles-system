@@ -23,33 +23,103 @@ namespace TitlesSystem.Patches
         {
             try
             {
-                // Only track kills of actual zombies (excludes animals, players, etc.)
-                if (!(__instance is EntityZombie)) return;
-
-                // A null or missing source means environmental death — skip
                 if (_dmResponse.Source == null) return;
 
-                int killerEntityId = GameApiCompat.GetKillerEntityId(_dmResponse.Source);
-                if (killerEntityId < 0) return;
+                // Track zombie kills
+                if (__instance is EntityZombie)
+                {
+                    int killerEntityId = GameApiCompat.GetKillerEntityId(_dmResponse.Source);
+                    if (killerEntityId < 0) return;
 
-                // Confirm the killer is a player
-                EntityPlayer killerPlayer =
-                    GameManager.Instance?.World?.Players?.dict?.TryGetValue(killerEntityId, out var p) == true ? p : null;
+                    // Confirm the killer is a player
+                    EntityPlayer killerPlayer =
+                        GameManager.Instance?.World?.Players?.dict?.TryGetValue(killerEntityId, out var p) == true ? p : null;
 
-                if (killerPlayer == null) return;
+                    if (killerPlayer == null) return;
 
-                // Resolve ClientInfo to get the stable platform player ID
-                ClientInfo clientInfo = GameApiCompat.GetClientInfoByEntityId(killerEntityId);
-                if (clientInfo == null) return;
+                    // Resolve ClientInfo to get the stable platform player ID
+                    ClientInfo clientInfo = GameApiCompat.GetClientInfoByEntityId(killerEntityId);
+                    if (clientInfo == null) return;
 
-                string killerPlayerId = GameApiCompat.GetPlayerId(clientInfo);
-                if (string.IsNullOrEmpty(killerPlayerId)) return;
+                    string killerPlayerId = GameApiCompat.GetPlayerId(clientInfo);
+                    if (string.IsNullOrEmpty(killerPlayerId)) return;
 
-                RankManager.Instance.OnZombieKilled(killerEntityId, killerPlayerId);
+                    // Extract weapon info from damage source
+                    string weaponId = ExtractWeaponId(_dmResponse);
+
+                    RankManager.Instance.OnZombieKilled(killerEntityId, killerPlayerId, weaponId);
+                }
+                // Track player deaths
+                else if (__instance is EntityPlayer deadPlayer)
+                {
+                    int deadEntityId = GetEntityIdCompat(deadPlayer);
+                    if (deadEntityId < 0) return;
+
+                    ClientInfo deadClientInfo = GameApiCompat.GetClientInfoByEntityId(deadEntityId);
+                    if (deadClientInfo == null) return;
+
+                    string deadPlayerId = GameApiCompat.GetPlayerId(deadClientInfo);
+                    if (string.IsNullOrEmpty(deadPlayerId)) return;
+
+                    RankManager.Instance.OnPlayerDied(deadPlayerId);
+                }
             }
             catch (Exception e)
             {
                 Log.Error($"[TitlesSystem] EntityDeathPatch error: {e.Message}");
+            }
+        }
+
+        private static int GetEntityIdCompat(object entity)
+        {
+            if (entity == null) return -1;
+
+            try
+            {
+                var type = entity.GetType();
+
+                var field = type.GetField("entityId");
+                if (field != null && field.GetValue(entity) is int fieldId)
+                    return fieldId;
+
+                var prop = type.GetProperty("entityId");
+                if (prop != null && prop.GetValue(entity, null) is int propId)
+                    return propId;
+            }
+            catch
+            {
+                // Best-effort fallback.
+            }
+
+            return -1;
+        }
+
+        /// <summary>
+        /// Extract weapon name from a DamageResponse's source.
+        /// Returns "unknown" if unable to determine.
+        /// For now, returns weapon type based on damage source type.
+        /// </summary>
+        private static string ExtractWeaponId(DamageResponse dmResponse)
+        {
+            try
+            {
+                // Try to extract from damage source type
+                if (dmResponse.Source != null)
+                {
+                    string sourceName = dmResponse.Source.ToString();
+                    if (sourceName.Contains("Projectile"))
+                        return "projectile";
+                    if (sourceName.Contains("Fire"))
+                        return "fire";
+                    if (sourceName.Contains("Explosion"))
+                        return "explosive";
+                }
+
+                return "weapon";
+            }
+            catch
+            {
+                return "unknown";
             }
         }
     }

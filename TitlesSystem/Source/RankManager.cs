@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Xml;
 using System.Xml.Serialization;
 
@@ -34,6 +35,10 @@ namespace TitlesSystem
         private string _dataPath;
         private bool _showRankInName = true;
         private bool _announceRankUp = true;
+        private bool _showLeaderboardOnLogin = true;
+        private int _showLeaderboardIntervalHours = 6;
+        private int _leaderboardTopPlayers = 10;
+        private DateTime _lastLeaderboardTime = DateTime.MinValue;
 
         private static readonly XmlSerializer PlayerDataSerializer =
             new XmlSerializer(typeof(PlayerRankData));
@@ -116,6 +121,18 @@ namespace TitlesSystem
             XmlNode announceNode = doc.SelectSingleNode("/TitlesConfig/Settings/AnnounceRankUp");
             if (announceNode?.Attributes?["value"] != null)
                 bool.TryParse(announceNode.Attributes["value"].Value, out _announceRankUp);
+
+            XmlNode leaderboardLoginNode = doc.SelectSingleNode("/TitlesConfig/Settings/ShowLeaderboardOnLogin");
+            if (leaderboardLoginNode?.Attributes?["value"] != null)
+                bool.TryParse(leaderboardLoginNode.Attributes["value"].Value, out _showLeaderboardOnLogin);
+
+            XmlNode leaderboardIntervalNode = doc.SelectSingleNode("/TitlesConfig/Settings/ShowLeaderboardIntervalHours");
+            if (leaderboardIntervalNode?.Attributes?["value"] != null)
+                int.TryParse(leaderboardIntervalNode.Attributes["value"].Value, out _showLeaderboardIntervalHours);
+
+            XmlNode leaderboardTopNode = doc.SelectSingleNode("/TitlesConfig/Settings/LeaderboardTopPlayers");
+            if (leaderboardTopNode?.Attributes?["value"] != null)
+                int.TryParse(leaderboardTopNode.Attributes["value"].Value, out _leaderboardTopPlayers);
 
             // Read ranks
             _ranks.Clear();
@@ -222,10 +239,24 @@ namespace TitlesSystem
                 _playerData[playerId] = data;
             }
 
+            // Mark session start
+            data.SessionJoinTime = DateTime.UtcNow.ToString("o");
             data.Touch();
             UpdatePlayerDisplayName(GameApiCompat.GetEntityId(clientInfo), data);
 
             Log.Out($"[TitlesSystem] '{data.OriginalName}' spawned with rank [{_ranks[data.CurrentRankIndex].ShortTitle}] ({data.ZombieKills} kills).");
+
+            // Show leaderboard on login if enabled
+            if (_showLeaderboardOnLogin)
+            {
+                BroadcastLeaderboard();
+            }
+            // Or show if interval timer is ready
+            else if (_showLeaderboardIntervalHours > 0 && 
+                     DateTime.UtcNow.Subtract(_lastLeaderboardTime).TotalHours >= _showLeaderboardIntervalHours)
+            {
+                BroadcastLeaderboard();
+            }
         }
 
         /// <summary>
@@ -241,6 +272,14 @@ namespace TitlesSystem
 
             if (_playerData.TryGetValue(playerId, out var data))
             {
+                // Add session playtime
+                if (!string.IsNullOrEmpty(data.SessionJoinTime) &&
+                    DateTime.TryParse(data.SessionJoinTime, out var sessionStart))
+                {
+                    long sessionSeconds = (long)(DateTime.UtcNow - sessionStart).TotalSeconds;
+                    data.AddSessionTime(sessionSeconds);
+                }
+
                 data.Touch();
                 SavePlayerData(data);
                 Log.Out($"[TitlesSystem] Saved rank data for '{data.OriginalName}'.");
@@ -251,11 +290,13 @@ namespace TitlesSystem
         /// Called when a zombie is killed by a player. Increments the kill count
         /// and triggers a rank-up if the new kill count meets the next threshold.
         /// </summary>
-        public void OnZombieKilled(int killerEntityId, string killerPlayerId)
+        public void OnZombieKilled(int killerEntityId, string killerPlayerId, string weaponId = "unknown")
         {
             if (!_playerData.TryGetValue(killerPlayerId, out var data)) return;
 
-            data.ZombieKills++;
+            int oldKills = data.ZombieKills;
+            data.RecordKill(weaponId);
+
             int newRankIndex = ComputeRankIndex(data.ZombieKills);
 
             if (newRankIndex > data.CurrentRankIndex)
@@ -276,8 +317,71 @@ namespace TitlesSystem
         }
 
         /// <summary>
+        /// Called when a player dies. Tracks death count and resets survival streak.
+        /// </summary>
+        public void OnPlayerDied(string playerId)
+        {
+            if (!_playerData.TryGetValue(playerId, out var data)) return;
+            data.RecordDeath();
+        }
+
+        /// <summary>
         /// Saves all currently loaded player data to disk (e.g. on server shutdown).
         /// </summary>
+            /// <summary>
+            /// Broadcasts the top player leaderboard to all connected players.
+            /// </summary>
+            public void BroadcastLeaderboard()
+            {
+                try
+                {
+                    _lastLeaderboardTime = DateTime.UtcNow;
+
+                    var allPlayerData = GetAllPlayerData();
+                    if (allPlayerData.Count == 0)
+                    {
+                        return;
+                    }
+
+                    // Sort by zombie kills descending
+                    var topPlayers = allPlayerData
+                        .OrderByDescending(p => p.ZombieKills)
+                        .Take(_leaderboardTopPlayers)
+                        .ToList();
+
+                    // Build compact one-line header for small chat windows.
+                    List<string> leaderboardLines = new List<string>
+                    {
+                        $"[TitlesSystem] Leaderboard Top {topPlayers.Count}"
+                    };
+
+                    // Add player lines
+                    int position = 1;
+                    foreach (var player in topPlayers)
+                    {
+                        string rank =
+                            player.CurrentRankIndex >= 0 && player.CurrentRankIndex < _ranks.Count
+                                ? _ranks[player.CurrentRankIndex].ShortTitle
+                                : "Unknown";
+                        string line = $"#{position} {player.OriginalName} [{rank}] {player.ZombieKills}";
+                        leaderboardLines.Add(line);
+                        position++;
+                    }
+
+                    // Broadcast each line to all players
+                    foreach (var line in leaderboardLines)
+                    {
+                        GameApiCompat.ChatMessageGlobal(line);
+                    }
+
+                    Log.Out($"[TitlesSystem] Leaderboard broadcast to all players.");
+                }
+                catch (Exception ex)
+                {
+                    Log.Error($"[TitlesSystem] Error broadcasting leaderboard: {ex.Message}");
+                }
+            }
+
         public void SaveAllPlayerData()
         {
             foreach (var data in _playerData.Values)
@@ -317,7 +421,7 @@ namespace TitlesSystem
 
             ClientInfo clientInfo = GetClientInfo(playerId);
             if (clientInfo != null)
-                UpdatePlayerDisplayName(clientInfo.entityId, data);
+                UpdatePlayerDisplayName(GameApiCompat.GetEntityId(clientInfo), data);
 
             SavePlayerData(data);
             return true;
@@ -369,9 +473,13 @@ namespace TitlesSystem
                 World world = GameManager.Instance?.World;
                 if (world != null)
                 {
-                    EntityPlayer player = world.Players.dict.TryGetValue(clientInfo.entityId, out var p) ? p : null;
-                    if (player != null && !string.IsNullOrEmpty(player.entityName))
-                        return player.entityName;
+                    int entityId = GameApiCompat.GetEntityId(clientInfo);
+                    if (entityId >= 0)
+                    {
+                        EntityPlayer player = world.Players.dict.TryGetValue(entityId, out var p) ? p : null;
+                        if (player != null && !string.IsNullOrEmpty(player.entityName))
+                            return player.entityName;
+                    }
                 }
             }
             catch { /* fall through to clientInfo fallback */ }
@@ -389,6 +497,85 @@ namespace TitlesSystem
             {
                 return null;
             }
+        }
+
+        /// <summary>
+        /// Find a player by name from all known players (online or offline).
+        /// Returns the player's ID if found, or null if not found.
+        /// </summary>
+        public string FindPlayerIdByName(string playerName)
+        {
+            if (string.IsNullOrEmpty(playerName)) return null;
+
+            // First try online players
+            try
+            {
+                var clientList = ConnectionManager.Instance?.Clients?.list;
+                if (clientList != null)
+                {
+                    // Exact match
+                    var client = clientList.Find(c =>
+                        string.Equals(c.playerName, playerName, StringComparison.OrdinalIgnoreCase));
+                    if (client != null)
+                        return GameApiCompat.GetPlayerId(client);
+
+                    // Partial match
+                    client = clientList.Find(c =>
+                        c.playerName.IndexOf(playerName, StringComparison.OrdinalIgnoreCase) >= 0);
+                    if (client != null)
+                        return GameApiCompat.GetPlayerId(client);
+                }
+            }
+            catch { /* fall through to offline check */ }
+
+            // Then try offline players from disk
+            try
+            {
+                var allPlayers = GetAllPlayerData();
+                
+                // Exact match
+                var player = allPlayers.Find(p =>
+                    string.Equals(p.OriginalName, playerName, StringComparison.OrdinalIgnoreCase));
+                if (player != null)
+                    return player.PlayerId;
+
+                // Partial match
+                player = allPlayers.Find(p =>
+                    p.OriginalName.IndexOf(playerName, StringComparison.OrdinalIgnoreCase) >= 0);
+                if (player != null)
+                    return player.PlayerId;
+            }
+            catch { /* return null below */ }
+
+            return null;
+        }
+
+        /// <summary>
+        /// Find a player's original name by ID (online or offline).
+        /// </summary>
+        public string FindPlayerNameById(string playerId)
+        {
+            if (string.IsNullOrEmpty(playerId)) return null;
+
+            // Check online first
+            try
+            {
+                var clientInfo = GameApiCompat.GetClientInfoByPlayerId(playerId);
+                if (clientInfo != null)
+                    return clientInfo.playerName;
+            }
+            catch { /* fall through to offline check */ }
+
+            // Check offline
+            try
+            {
+                var data = LoadPlayerData(playerId);
+                if (data != null)
+                    return data.OriginalName;
+            }
+            catch { /* return null below */ }
+
+            return null;
         }
 
         // ------------------------------------------------------------------ //
@@ -411,6 +598,44 @@ namespace TitlesSystem
             {
                 Log.Error($"[TitlesSystem] Failed to save data for player {data.PlayerId}: {e.Message}");
             }
+        }
+
+        /// <summary>
+        /// Returns all player data from disk, including offline players.
+        /// </summary>
+        public List<PlayerRankData> GetAllPlayerData()
+        {
+            var allPlayers = new List<PlayerRankData>();
+
+            if (_dataPath == null || !Directory.Exists(_dataPath))
+                return allPlayers;
+
+            try
+            {
+                var xmlFiles = Directory.GetFiles(_dataPath, "*.xml");
+                foreach (var file in xmlFiles)
+                {
+                    try
+                    {
+                        using (var reader = new StreamReader(file, System.Text.Encoding.UTF8))
+                        {
+                            var data = (PlayerRankData)PlayerDataSerializer.Deserialize(reader);
+                            if (data != null)
+                                allPlayers.Add(data);
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        Log.Warning($"[TitlesSystem] Failed to load player data from {Path.GetFileName(file)}: {e.Message}");
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                Log.Error($"[TitlesSystem] Failed to read player data directory: {e.Message}");
+            }
+
+            return allPlayers;
         }
 
         private PlayerRankData LoadPlayerData(string playerId)
