@@ -91,33 +91,57 @@ namespace TitlesSystem.Commands
         private static void CmdCheckRank(List<string> _params, CommandSenderInfo sender)
         {
             ClientInfo target = null;
+            string targetId = null;
+            string displayName = null;
 
             if (_params.Count > 1)
             {
                 string query = _params[1];
+                
+                // Try to find online player first
                 target = FindClientByNameOrId(query);
-                if (target == null)
+                if (target != null)
                 {
-                    Output($"[TitlesSystem] Player '{query}' not found or not online.", sender);
-                    return;
+                    targetId = GameApiCompat.GetPlayerId(target);
+                    displayName = target.playerName;
+                }
+                else
+                {
+                    // Try to find offline player by name
+                    targetId = RankManager.Instance.FindPlayerIdByName(query);
+                    if (targetId != null)
+                    {
+                        displayName = RankManager.Instance.FindPlayerNameById(targetId);
+                    }
+                    else
+                    {
+                        Output($"[TitlesSystem] Player '{query}' not found (online or offline).", sender);
+                        return;
+                    }
                 }
             }
             else
             {
                 target = sender.RemoteClientInfo;
+                if (target == null)
+                {
+                    Output("[TitlesSystem] No player specified. Usage: rank check <name>", sender);
+                    return;
+                }
+                targetId = GameApiCompat.GetPlayerId(target);
+                displayName = target.playerName;
             }
 
-            if (target == null)
-            {
-                Output("[TitlesSystem] No player specified. Usage: rank check <name/entityId>", sender);
-                return;
-            }
-
-            string targetId = GameApiCompat.GetPlayerId(target);
             var data = RankManager.Instance.GetPlayerData(targetId);
             if (data == null)
             {
-                Output($"[TitlesSystem] No rank data found for '{target.playerName}'. They may not have logged in yet.", sender);
+                // Try loading from disk if not in cache
+                data = RankManager.Instance.GetAllPlayerData().Find(p => p.PlayerId == targetId);
+            }
+
+            if (data == null)
+            {
+                Output($"[TitlesSystem] No rank data found for '{displayName}'. They may not have logged in yet.", sender);
                 return;
             }
 
@@ -206,14 +230,15 @@ namespace TitlesSystem.Commands
 
             if (_params.Count < 3)
             {
-                Output("[TitlesSystem] Usage: rank set <name/entityId> <kills>", sender);
+                Output("[TitlesSystem] Usage: rank set <name> <kills>", sender);
                 return;
             }
 
-            ClientInfo target = FindClientByNameOrId(_params[1]);
-            if (target == null)
+            // Find player by name (online or offline)
+            string targetId = RankManager.Instance.FindPlayerIdByName(_params[1]);
+            if (targetId == null)
             {
-                Output($"[TitlesSystem] Player '{_params[1]}' not found or not online.", sender);
+                Output($"[TitlesSystem] Player '{_params[1]}' not found (online or offline).", sender);
                 return;
             }
 
@@ -223,16 +248,16 @@ namespace TitlesSystem.Commands
                 return;
             }
 
-            string targetId = GameApiCompat.GetPlayerId(target);
             if (!RankManager.Instance.SetPlayerKills(targetId, kills))
             {
-                Output($"[TitlesSystem] Could not update kills — '{target.playerName}' has no rank data loaded.", sender);
+                Output($"[TitlesSystem] Could not update kills — player has no rank data loaded.", sender);
                 return;
             }
 
             var data = RankManager.Instance.GetPlayerData(targetId);
+            var displayName = data?.OriginalName ?? _params[1];
             var rank = RankManager.Instance.Ranks[data.CurrentRankIndex];
-            Output($"[TitlesSystem] Set {target.playerName}'s kills to {kills} → Rank: [{rank.Title}]", sender);
+            Output($"[TitlesSystem] Set {displayName}'s kills to {kills} → Rank: [{rank.Title}]", sender);
         }
 
         private static void CmdTopPlayers(List<string> _params, CommandSenderInfo sender)
