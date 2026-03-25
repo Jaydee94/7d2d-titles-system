@@ -82,7 +82,10 @@ Aliases: `ranks`, `title`, `/ranks`, `/title`.
 | `/rank` | Show your current rank (in chat) |
 | `/rank check [name]` | Show your or another player's rank and statistics |
 | `/rank set <name> <kills>` | **Admin** — set a player's kill count |
-| `/rank top [n]` | Show leaderboard — top 10 (or top N, max 50) players by kills |
+| `/rank top [n]` | Show leaderboard — top 10 (or top N, max 50) online players |
+| `/rank top all [n]` | Show all-time leaderboard — includes offline players |
+
+**Note:** Use `/rank top all` to view the leaderboard even when no players are online. Player data is persisted to disk and survives server restarts.
 
 ## Building from Source
 
