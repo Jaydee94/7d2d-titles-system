@@ -26,7 +26,6 @@ Edit `Config/TitlesRanks.xml` to customise settings and ranks. Changes take effe
 
 ### Core Settings
 ```xml
-```xml
 <Settings>
     <ShowRankInName value="true"/>              <!-- show rank above player head -->
     <AnnounceRankUp value="true"/>              <!-- broadcast rank-up in chat -->
@@ -36,26 +35,30 @@ Edit `Config/TitlesRanks.xml` to customise settings and ranks. Changes take effe
     <LeaderboardTopPlayers value="10"/>         <!-- number of top players to display -->
 </Settings>
 ```
-<Ranks>
+
 ### Leaderboard Settings
-    <!-- ranks must be ordered by ascending kills value -->
+
 | Setting | Default | Description |
 |---------|---------|-------------|
 | `ShowLeaderboardOnLogin` | `true` | Display the top players leaderboard in global chat when any player joins |
 | `ShowLeaderboardIntervalHours` | `6` | Periodically broadcast leaderboard every N in-game hours (set to 0 to disable periodic broadcasts) |
 | `LeaderboardTopPlayers` | `10` | Number of top players to show in leaderboard rankings |
-    <Rank kills="0"   title="Your Custom Rank" shortTitle="Custom"/>
+
 The leaderboard displays each player's rank position, name, total zombie kills, and current rank title. It updates automatically throughout the server's lifetime.
-    <Rank kills="100" title="Another Rank"      shortTitle="Another"/>
+
 ### Rank Configuration
-```
 ```xml
 <Ranks>
+    <!-- ranks must be ordered by ascending kills value -->
+    <Rank kills="0"   title="Your Custom Rank" shortTitle="Custom"/>
+    <Rank kills="100" title="Another Rank"      shortTitle="Another"/>
+</Ranks>
+```
 
 ## Ranks
 
-</Ranks>
-```
+| # | Short Title | Title | Kills Required |
+|---|-------------|-------|----------------|
 | 1 | `Civilian` | Freshly Irradiated Civilian | 0 |
 | 2 | `Diver` | Dumpster Diver of Doom | 5 |
 | 3 | `Rusty` | Rusty Nail Enthusiast | 10 |
