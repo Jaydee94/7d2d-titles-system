@@ -7,12 +7,12 @@ namespace TitlesSystem.Commands
     /// <summary>
     /// Console commands for the TitlesSystem mod.
     ///
-    /// Usage (server console / telnet / CSMM):
+    /// Usage (server console / telnet / CSMM / in-game chat):
     ///   rank                       — List all rank tiers
-    ///   rank check [name/entityId] — Show a player's current rank
-    ///   rank set <name/entityId> <kills> — Forcibly set a player's kill count (admin)
+    ///   rank check [name]          — Show a player's rank and stats (online or offline)
+    ///   rank set <name> <kills>    — Set a player's kill count (admin, online or offline)
     ///   rank top [n]               — Show top-N online players (default 10)
-    ///   rank top all [n]           — Show top-N all-time players from disk (default 10)
+    ///   rank top all [n]           — Show top-N all-time players (default 10)
     /// </summary>
     public class ConsoleCmdRank : ConsoleCmdAbstract
     {
@@ -31,8 +31,8 @@ namespace TitlesSystem.Commands
             return
                 "Usage:\n" +
                 "  rank                       — List all rank tiers and their kill thresholds\n" +
-                "  rank check [name/entityId] — Show a player's current rank (defaults to self)\n" +
-                "  rank set <name/entityId> <kills> — Forcibly set kill count (admin only)\n" +
+                "  rank check [name]          — Show a player's current rank and stats (online or offline)\n" +
+                "  rank set <name> <kills>    — Set a player's kill count (admin only, works offline)\n" +
                 "  rank top [n]               — Show top-N online players by kill count (default 10)\n" +
                 "  rank top all [n]           — Show top-N all-time players from disk (default 10)\n";
         }
