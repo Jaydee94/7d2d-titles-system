@@ -349,12 +349,10 @@ namespace TitlesSystem
                         .Take(_leaderboardTopPlayers)
                         .ToList();
 
-                    // Build message header
+                    // Build compact one-line header for small chat windows.
                     List<string> leaderboardLines = new List<string>
                     {
-                        "=======================================",
-                        "      TOP PLAYERS LEADERBOARD",
-                        "======================================="
+                        $"[TitlesSystem] Leaderboard Top {topPlayers.Count}"
                     };
 
                     // Add player lines
@@ -369,8 +367,6 @@ namespace TitlesSystem
                         leaderboardLines.Add(line);
                         position++;
                     }
-
-                    leaderboardLines.Add("=======================================");
 
                     // Broadcast each line to all players
                     foreach (var line in leaderboardLines)

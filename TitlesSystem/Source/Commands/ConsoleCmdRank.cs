@@ -34,7 +34,9 @@ namespace TitlesSystem.Commands
                 "  rank check [name]          — Show a player's current rank and stats (online or offline)\n" +
                 "  rank set <name> <kills>    — Set a player's kill count (admin only, works offline)\n" +
                 "  rank top [n]               — Show top-N online players by kill count (default 10)\n" +
-                "  rank top all [n]           — Show top-N all-time players from disk (default 10)\n";
+                "  rank top <start-end>       — Show online leaderboard range (e.g. rank top 4-8)\n" +
+                "  rank top all [n]           — Show top-N all-time players from disk (default 10)\n" +
+                "  rank top all <start-end>   — Show all-time leaderboard range (e.g. rank top all 11-20)\n";
         }
 
         public override void Execute(List<string> _params, CommandSenderInfo _senderInfo)
@@ -263,24 +265,47 @@ namespace TitlesSystem.Commands
         private static void CmdTopPlayers(List<string> _params, CommandSenderInfo sender)
         {
             int n = 10;
+            int startRank = 1;
             bool showAll = false;
+            bool useRange = false;
 
-            // Parse parameters: rank top [all|n]
+            // Parse parameters: rank top [all] [n|start-end]
             if (_params.Count > 1)
             {
                 if (string.Equals(_params[1], "all", StringComparison.OrdinalIgnoreCase))
                 {
                     showAll = true;
                     if (_params.Count > 2)
-                        int.TryParse(_params[2], out n);
+                    {
+                        if (TryParseRange(_params[2], out int parsedStart, out int parsedEnd))
+                        {
+                            useRange = true;
+                            startRank = parsedStart;
+                            n = parsedEnd - parsedStart + 1;
+                        }
+                        else
+                        {
+                            int.TryParse(_params[2], out n);
+                        }
+                    }
                 }
                 else
                 {
-                    int.TryParse(_params[1], out n);
+                    if (TryParseRange(_params[1], out int parsedStart, out int parsedEnd))
+                    {
+                        useRange = true;
+                        startRank = parsedStart;
+                        n = parsedEnd - parsedStart + 1;
+                    }
+                    else
+                    {
+                        int.TryParse(_params[1], out n);
+                    }
                 }
             }
 
             n = Math.Max(1, Math.Min(n, 50));
+            startRank = Math.Max(1, startRank);
 
             var entries = new List<(string name, int kills, string title)>();
 
@@ -301,7 +326,6 @@ namespace TitlesSystem.Commands
                 }
 
                 entries.Sort((a, b) => b.kills.CompareTo(a.kills));
-                Output($"=== All-Time Top {Math.Min(n, entries.Count)} Players by Zombie Kills ===", sender);
             }
             else
             {
@@ -324,14 +348,52 @@ namespace TitlesSystem.Commands
                 }
 
                 entries.Sort((a, b) => b.kills.CompareTo(a.kills));
-                Output($"=== Top {Math.Min(n, entries.Count)} Online Players by Zombie Kills ===", sender);
             }
 
-            for (int i = 0; i < Math.Min(n, entries.Count); i++)
+            int maxRank = entries.Count;
+            if (maxRank == 0)
             {
-                var (name, kills, title) = entries[i];
-                Output($"  {i + 1,2}. {name,-20} [{title,10}]  {kills} kills", sender);
+                Output("[TitlesSystem] No leaderboard entries available.", sender);
+                return;
             }
+
+            int endRank = useRange ? Math.Min(startRank + n - 1, maxRank) : Math.Min(n, maxRank);
+            int displayStart = useRange ? startRank : 1;
+
+            if (displayStart > maxRank)
+            {
+                Output($"[TitlesSystem] Requested start rank #{displayStart} is out of range (max #{maxRank}).", sender);
+                return;
+            }
+
+            string scope = showAll ? "All-Time" : "Online";
+            Output($"[TitlesSystem] Leaderboard {scope} #{displayStart}-#{endRank} (of {maxRank})", sender);
+
+            for (int rankIndex = displayStart - 1; rankIndex < endRank; rankIndex++)
+            {
+                var (name, kills, title) = entries[rankIndex];
+                Output($"  #{rankIndex + 1,2} {name,-20} [{title,10}] {kills} kills", sender);
+            }
+        }
+
+        private static bool TryParseRange(string value, out int start, out int end)
+        {
+            start = 0;
+            end = 0;
+
+            if (string.IsNullOrWhiteSpace(value)) return false;
+
+            var parts = value.Split('-');
+            if (parts.Length != 2) return false;
+
+            if (!int.TryParse(parts[0], out start)) return false;
+            if (!int.TryParse(parts[1], out end)) return false;
+            if (start < 1 || end < start) return false;
+
+            // Limit max window size to existing top command max.
+            if (end - start + 1 > 50) return false;
+
+            return true;
         }
 
         // ------------------------------------------------------------------ //

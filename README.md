@@ -113,6 +113,8 @@ Aliases: `ranks`, `title`, `/ranks`, `/title`.
 | `/rank set <name> <kills>` | **Admin** — set a player's kill count (online or offline) |
 | `/rank top [n]` | Show leaderboard — top 10 (or top N, max 50) online players |
 | `/rank top all [n]` | Show all-time leaderboard — includes offline players |
+| `/rank top <start-end>` | Show an online leaderboard range (e.g. `/rank top 4-8`) |
+| `/rank top all <start-end>` | Show an all-time leaderboard range (e.g. `/rank top all 11-20`) |
 
 **Offline Player Support:** All rank commands work with offline players by loading saved data from disk. Use player names to look up offline stats. Player data is persisted and survives server restarts.
 
