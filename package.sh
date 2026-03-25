@@ -61,7 +61,6 @@ has_game_dlls() {
 }
 
 GAME_ROOT=""
-BUILD_STUB=false
 
 if [[ -n "$SERVER_ROOT_ARG" ]]; then
     GAME_ROOT="$SERVER_ROOT_ARG"
@@ -103,9 +102,9 @@ if [[ -z "$GAME_ROOT" && "$WSL_MODE" == true ]]; then
 fi
 
 if [[ -z "$GAME_ROOT" ]]; then
-    echo "WARNING: No 7DTD server DLLs found. Falling back to CI stubs."
-    echo "         This build is for CI/test only and may not load on live servers."
-    BUILD_STUB=true
+    echo "ERROR: No 7DTD server DLLs found. Release packaging requires real game DLLs."
+    echo "       Provide --server-root PATH or install the dedicated server locally."
+    exit 1
 fi
 
 MOD_VERSION=$(grep -oP '(?<=value=")[^"]+' "$MOD_DIR/ModInfo.xml" | sed -n '3p')
@@ -117,12 +116,8 @@ fi
 echo "=== 7D2D Titles System — Package ==="
 echo "  Version     : $MOD_VERSION"
 echo "  Output      : $OUT_DIR/TitlesSystem-v${MOD_VERSION}.zip"
-if [[ "$BUILD_STUB" == true ]]; then
-    echo "  Build mode  : CI stubs (non-deployable)"
-else
-    echo "  Build mode  : Game DLLs"
-    echo "  Server root : $GAME_ROOT"
-fi
+echo "  Build mode  : Game DLLs"
+echo "  Server root : $GAME_ROOT"
 echo ""
 
 if [[ "$SKIP_TESTS" == false ]]; then
@@ -143,24 +138,15 @@ echo "--- Cleaning previous build output ---"
     --nologo
 
 echo "--- Building TitlesSystem ---"
-if [[ "$BUILD_STUB" == true ]]; then
-    "$DOTNET" build \
-        "$(to_build_path "$MOD_DIR/TitlesSystem.csproj")" \
-        -c Release \
-        -p:OutputPath=bin/Release \
-        -p:GITHUB_ACTIONS=true \
-        -t:Rebuild \
-        --nologo
-else
-    "$DOTNET" build \
-        "$(to_build_path "$MOD_DIR/TitlesSystem.csproj")" \
-        -c Release \
-        -p:OutputPath=bin/Release \
-        -p:GITHUB_ACTIONS=false \
-        -p:GameRoot="$(to_build_path "$GAME_ROOT")" \
-        -t:Rebuild \
-        --nologo
-fi
+"$DOTNET" build \
+    "$(to_build_path "$MOD_DIR/TitlesSystem.csproj")" \
+    -c Release \
+    -p:OutputPath=bin/Release \
+    -p:GITHUB_ACTIONS=false \
+    -p:RequireRealGameDlls=true \
+    -p:GameRoot="$(to_build_path "$GAME_ROOT")" \
+    -t:Rebuild \
+    --nologo
 
 STAGING="$(mktemp -d)/TitlesSystem"
 mkdir -p "$STAGING/Config"

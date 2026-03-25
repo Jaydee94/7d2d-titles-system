@@ -32,7 +32,13 @@
     <ManagedDir Condition="Exists('$(GameRoot)/7DaysToDie_Data/Managed')">$(GameRoot)/7DaysToDie_Data/Managed</ManagedDir>
     <ManagedDir Condition="'$(ManagedDir)' == '' and Exists('$(GameRoot)/7DaysToDieServer_Data/Managed')">$(GameRoot)/7DaysToDieServer_Data/Managed</ManagedDir>
     <ManagedDir Condition="'$(ManagedDir)' == ''">$(GameRoot)/7DaysToDie_Data/Managed</ManagedDir>
+    <RequireRealGameDlls Condition="'$(RequireRealGameDlls)' == ''">false</RequireRealGameDlls>
   </PropertyGroup>
+
+  <Target Name="FailIfRealGameDllsRequiredButMissing" BeforeTargets="ResolveReferences"
+          Condition="'$(RequireRealGameDlls)' == 'true' and !Exists('$(ManagedDir)/Assembly-CSharp.dll')">
+    <Error Text="RequireRealGameDlls=true but Assembly-CSharp.dll was not found under ManagedDir='$(ManagedDir)'. Set GameRoot to a valid 7DTD install path for release builds." />
+  </Target>
 
   <ItemGroup Condition="Exists('$(ManagedDir)/Assembly-CSharp.dll')">
     <Reference Include="Assembly-CSharp">
@@ -63,7 +69,7 @@
     Harmony is referenced for compilation only (ExcludeAssets=runtime) because
     the server already loads 0Harmony from the 0_TFP_Harmony mod folder.
   -->
-  <ItemGroup Condition="!Exists('$(ManagedDir)/Assembly-CSharp.dll')">
+  <ItemGroup Condition="!Exists('$(ManagedDir)/Assembly-CSharp.dll') and '$(RequireRealGameDlls)' != 'true'">
     <!-- Stub types compiled inline — no external GameStubs.dll dependency at runtime -->
     <Compile Include="../libs/Stubs/GameTypes.cs" />
     <!-- Harmony for compilation only; runtime copy excluded (server provides 0Harmony via 0_TFP_Harmony) -->

@@ -33,7 +33,22 @@ jobs:
           dotnet-version: '8.0.x'
 
       # -----------------------------------------------------------------------
-      # 3. Install SteamCMD and fetch 7DTD dedicated server DLLs
+      # 3. Restore cached SteamCMD + 7DTD server payload
+      #    Speeds up release builds by avoiding a full re-download each run.
+      # -----------------------------------------------------------------------
+      - name: Cache SteamCMD and 7DTD server
+        id: steam-cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ${{ github.workspace }}/.7dtd-server
+            ~/steamcmd
+          key: ${{ runner.os }}-steamcmd-7dtd-v1
+          restore-keys: |
+            ${{ runner.os }}-steamcmd-7dtd-
+
+      # -----------------------------------------------------------------------
+      # 4. Install/update SteamCMD and fetch 7DTD dedicated server DLLs
       #    Release artifacts must be built against real game DLLs so the
       #    runtime IModApi type identity matches the server.
       # -----------------------------------------------------------------------
@@ -43,17 +58,25 @@ jobs:
 
           mkdir -p "$HOME/steamcmd"
           cd "$HOME/steamcmd"
-          curl -fsSL "https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz" -o steamcmd_linux.tar.gz
-          tar -xzf steamcmd_linux.tar.gz
+
+          if [[ ! -x "$HOME/steamcmd/steamcmd.sh" ]]; then
+            curl -fsSL "https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz" -o steamcmd_linux.tar.gz
+            tar -xzf steamcmd_linux.tar.gz
+          fi
 
           SERVER_ROOT="${{ github.workspace }}/.7dtd-server"
           mkdir -p "$SERVER_ROOT"
+
+          APP_UPDATE_ARGS="294420"
+          if [[ "${{ steps.steam-cache.outputs.cache-hit }}" != "true" ]]; then
+            APP_UPDATE_ARGS="294420 validate"
+          fi
 
           ./steamcmd.sh \
             +@sSteamCmdForcePlatformType windows \
             +force_install_dir "$SERVER_ROOT" \
             +login anonymous \
-            +app_update 294420 validate \
+            +app_update ${APP_UPDATE_ARGS} \
             +quit
 
           HAS_CLIENT_DLL=false
@@ -67,7 +90,7 @@ jobs:
           fi
 
       # -----------------------------------------------------------------------
-      # 4. Read the mod version from ModInfo.xml
+      # 5. Read the mod version from ModInfo.xml
       # -----------------------------------------------------------------------
       - name: Read mod version
         id: modversion
@@ -77,19 +100,20 @@ jobs:
           echo "Mod version: ${VERSION}"
 
       # -----------------------------------------------------------------------
-      # 5. Build the mod against real dedicated server DLLs
+      # 6. Build the mod against real dedicated server DLLs
       # -----------------------------------------------------------------------
       - name: Build TitlesSystem
         run: |
           SERVER_ROOT="${{ github.workspace }}/.7dtd-server"
           dotnet build TitlesSystem/TitlesSystem.csproj \
             -c Release \
+            -p:RequireRealGameDlls=true \
             -p:GameRoot="$SERVER_ROOT" \
             -p:OutputPath=bin/Release
         working-directory: ${{ github.workspace }}
 
       # -----------------------------------------------------------------------
-      # 6. Package the mod into a deployable zip
+      # 7. Package the mod into a deployable zip
       #    Structure mirrors what goes inside <ServerRoot>/Mods/TitlesSystem/
       # -----------------------------------------------------------------------
       - name: Package mod
@@ -109,7 +133,7 @@ jobs:
         working-directory: ${{ github.workspace }}
 
       # -----------------------------------------------------------------------
-      # 7. Create (or update) the GitHub Release
+      # 8. Create (or update) the GitHub Release
       #    Uses the built-in GitHub CLI — no third-party action required.
       # -----------------------------------------------------------------------
       - name: Create GitHub Release
