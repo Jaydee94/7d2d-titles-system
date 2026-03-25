@@ -75,7 +75,13 @@ namespace TitlesSystem.Patches
             try
             {
                 var sender = new CommandSenderInfo { RemoteClientInfo = cInfo };
-                new ConsoleCmdRank().Execute(commandParams, sender);
+                // ConsoleCmdRank.Execute expects parameters after the command name.
+                // Example: "/rank top" should pass ["top"], not ["rank", "top"].
+                var args = commandParams.Count > 1
+                    ? commandParams.GetRange(1, commandParams.Count - 1)
+                    : new List<string>();
+
+                new ConsoleCmdRank().Execute(args, sender);
             }
             catch (Exception e)
             {
