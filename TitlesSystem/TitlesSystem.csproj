@@ -34,7 +34,7 @@
     <ManagedDir Condition="'$(ManagedDir)' == ''">$(GameRoot)/7DaysToDie_Data/Managed</ManagedDir>
   </PropertyGroup>
 
-  <ItemGroup Condition="'$(GITHUB_ACTIONS)' != 'true'">
+  <ItemGroup Condition="Exists('$(ManagedDir)/Assembly-CSharp.dll')">
     <Reference Include="Assembly-CSharp">
       <HintPath>$(ManagedDir)/Assembly-CSharp.dll</HintPath>
       <Private>False</Private>
@@ -55,15 +55,15 @@
   </ItemGroup>
 
   <!--
-    CI build: replace game DLLs with stub types + Harmony from NuGet.
-    The GITHUB_ACTIONS environment variable is set automatically in GitHub Actions.
+    Fallback build mode: when game DLLs are unavailable, compile with local stub
+    types + Harmony from NuGet.
 
     IMPORTANT: GameTypes.cs is compiled directly into TitlesSystem.dll (not via
     ProjectReference) so no separate GameStubs.dll is needed at runtime.
     Harmony is referenced for compilation only (ExcludeAssets=runtime) because
     the server already loads 0Harmony from the 0_TFP_Harmony mod folder.
   -->
-  <ItemGroup Condition="'$(GITHUB_ACTIONS)' == 'true'">
+  <ItemGroup Condition="!Exists('$(ManagedDir)/Assembly-CSharp.dll')">
     <!-- Stub types compiled inline — no external GameStubs.dll dependency at runtime -->
     <Compile Include="../libs/Stubs/GameTypes.cs" />
     <!-- Harmony for compilation only; runtime copy excluded (server provides 0Harmony via 0_TFP_Harmony) -->
