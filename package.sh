@@ -1,35 +1,45 @@
 #!/usr/bin/env bash
 # =============================================================================
-# package.sh — Build and package the TitlesSystem mod
+# package.sh — Build and package the TitlesSystem mod and client add-on
 #
 # Usage:
-#   ./package.sh [--skip-tests] [--out-dir DIR] [--server-root PATH]
+#   ./package.sh [--skip-tests] [--out-dir DIR] [--server-root PATH] [--game-root PATH]
 #
 # Options:
 #   --skip-tests         Skip unit test run.
-#   --out-dir DIR        Directory to write the zip to (default: repo root).
-#   --server-root PATH   Path to 7DTD dedicated server install.
+#   --out-dir DIR        Directory to write the zip files to (default: repo root).
+#   --server-root PATH   Path to 7DTD dedicated server install (for server mod DLL).
 #                        Auto-detected from common Linux/Windows locations.
+#   --game-root PATH     Path to 7DTD game client install (for client mod DLL).
+#                        Defaults to --server-root value if omitted, which also
+#                        works when a full game installation provides both.
+#
+# Outputs:
+#   TitlesSystem-v{VERSION}.zip          — server-side mod (install in server Mods/)
+#   TitlesSystemClientMod-v{VERSION}.zip — client-side add-on (install in client Mods/)
 #
 # IMPORTANT:
 #   Deployable artifacts must be built against real game DLLs so IModApi type
-#   identity matches the server at runtime. CI stubs are only for tests.
+#   identity matches the server/client at runtime. CI stubs are only for tests.
 # =============================================================================
 
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 MOD_DIR="$SCRIPT_DIR/TitlesSystem"
+CLIENT_MOD_DIR="$SCRIPT_DIR/TitlesSystemClientMod"
 TESTS_DIR="$SCRIPT_DIR/TitlesSystem.Tests"
 SKIP_TESTS=false
 OUT_DIR="$SCRIPT_DIR"
 SERVER_ROOT_ARG=""
+GAME_ROOT_ARG=""
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --skip-tests)  SKIP_TESTS=true; shift ;;
         --out-dir)     OUT_DIR="$2"; shift 2 ;;
         --server-root) SERVER_ROOT_ARG="$2"; shift 2 ;;
+        --game-root)   GAME_ROOT_ARG="$2"; shift 2 ;;
         *) echo "Unknown option: $1"; exit 1 ;;
     esac
 done
@@ -107,6 +117,10 @@ if [[ -z "$GAME_ROOT" ]]; then
     exit 1
 fi
 
+# Client mod game root: prefer explicit --game-root, fall back to server root
+# (a full game client install also satisfies the server DLL check above).
+CLIENT_GAME_ROOT="${GAME_ROOT_ARG:-$GAME_ROOT}"
+
 MOD_VERSION=$(grep -oP '(?<=value=")[^"]+' "$MOD_DIR/ModInfo.xml" | sed -n '3p')
 if [[ -z "$MOD_VERSION" ]]; then
     echo "ERROR: Could not read version from TitlesSystem/ModInfo.xml"
@@ -114,10 +128,12 @@ if [[ -z "$MOD_VERSION" ]]; then
 fi
 
 echo "=== 7D2D Titles System — Package ==="
-echo "  Version     : $MOD_VERSION"
-echo "  Output      : $OUT_DIR/TitlesSystem-v${MOD_VERSION}.zip"
-echo "  Build mode  : Game DLLs"
-echo "  Server root : $GAME_ROOT"
+echo "  Version      : $MOD_VERSION"
+echo "  Server mod   : $OUT_DIR/TitlesSystem-v${MOD_VERSION}.zip"
+echo "  Client mod   : $OUT_DIR/TitlesSystemClientMod-v${MOD_VERSION}.zip"
+echo "  Build mode   : Game DLLs"
+echo "  Server root  : $GAME_ROOT"
+echo "  Client root  : $CLIENT_GAME_ROOT"
 echo ""
 
 if [[ "$SKIP_TESTS" == false ]]; then
@@ -136,8 +152,13 @@ echo "--- Cleaning previous build output ---"
     -c Release \
     -p:OutputPath=bin/Release \
     --nologo
+"$DOTNET" clean \
+    "$(to_build_path "$CLIENT_MOD_DIR/TitlesSystemClientMod.csproj")" \
+    -c Release \
+    -p:OutputPath=bin/Release \
+    --nologo
 
-echo "--- Building TitlesSystem ---"
+echo "--- Building TitlesSystem (server mod) ---"
 "$DOTNET" build \
     "$(to_build_path "$MOD_DIR/TitlesSystem.csproj")" \
     -c Release \
@@ -148,18 +169,40 @@ echo "--- Building TitlesSystem ---"
     -t:Rebuild \
     --nologo
 
-STAGING="$(mktemp -d)/TitlesSystem"
-mkdir -p "$STAGING/Config"
-cp "$MOD_DIR/ModInfo.xml"                  "$STAGING/"
-cp "$MOD_DIR/Config/TitlesRanks.xml"       "$STAGING/Config/"
-cp "$MOD_DIR/bin/Release/TitlesSystem.dll" "$STAGING/"
+echo "--- Building TitlesSystemClientMod (client add-on) ---"
+"$DOTNET" build \
+    "$(to_build_path "$CLIENT_MOD_DIR/TitlesSystemClientMod.csproj")" \
+    -c Release \
+    -p:OutputPath=bin/Release \
+    -p:RequireRealGameDlls=true \
+    -p:GameRoot="$(to_build_path "$CLIENT_GAME_ROOT")" \
+    -t:Rebuild \
+    --nologo
 
-ASSET="TitlesSystem-v${MOD_VERSION}.zip"
-OUT_ZIP="$OUT_DIR/$ASSET"
+# --- Package server mod ---
+STAGING_SERVER="$(mktemp -d)/TitlesSystem"
+mkdir -p "$STAGING_SERVER/Config"
+cp "$MOD_DIR/ModInfo.xml"                  "$STAGING_SERVER/"
+cp "$MOD_DIR/Config/TitlesRanks.xml"       "$STAGING_SERVER/Config/"
+cp "$MOD_DIR/bin/Release/TitlesSystem.dll" "$STAGING_SERVER/"
+
+SERVER_ZIP="$OUT_DIR/TitlesSystem-v${MOD_VERSION}.zip"
 mkdir -p "$OUT_DIR"
-(cd "$(dirname "$STAGING")" && zip -r "$OUT_ZIP" TitlesSystem/)
+(cd "$(dirname "$STAGING_SERVER")" && zip -r "$SERVER_ZIP" TitlesSystem/)
 
-echo "--- Package created ---"
-echo "  $OUT_ZIP"
+# --- Package client mod ---
+STAGING_CLIENT="$(mktemp -d)/TitlesSystemClientMod"
+mkdir -p "$STAGING_CLIENT/Config/XUi"
+cp "$CLIENT_MOD_DIR/ModInfo.xml"                                   "$STAGING_CLIENT/"
+cp "$CLIENT_MOD_DIR/Config/XUi/windows.xml"                        "$STAGING_CLIENT/Config/XUi/"
+cp "$CLIENT_MOD_DIR/bin/Release/TitlesSystemClientMod.dll"         "$STAGING_CLIENT/"
+
+CLIENT_ZIP="$OUT_DIR/TitlesSystemClientMod-v${MOD_VERSION}.zip"
+(cd "$(dirname "$STAGING_CLIENT")" && zip -r "$CLIENT_ZIP" TitlesSystemClientMod/)
+
+echo "--- Packages created ---"
+echo "  Server mod : $SERVER_ZIP"
+echo "  Client mod : $CLIENT_ZIP"
 echo ""
-echo "Install: unzip into server Mods/ and restart."
+echo "Server mod: unzip TitlesSystem into server Mods/ and restart."
+echo "Client mod: unzip TitlesSystemClientMod into client Mods/ and restart."

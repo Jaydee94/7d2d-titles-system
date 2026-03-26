@@ -27,13 +27,24 @@ jobs:
           dotnet-version: '8.0.x'
 
       # -----------------------------------------------------------------------
-      # 3. Build the mod
+      # 3. Build the server mod
       #    GITHUB_ACTIONS=true is set automatically; TitlesSystem.csproj uses
       #    it to switch from local game DLL references to the CI stub project.
       # -----------------------------------------------------------------------
       - name: Build TitlesSystem
         run: |
           dotnet build TitlesSystem/TitlesSystem.csproj \
+            -c Release \
+            -p:OutputPath=bin/Release
+        working-directory: ${{ github.workspace }}
+
+      # -----------------------------------------------------------------------
+      # 3b. Build the optional client-side add-on modlet
+      #     Uses GameTypes.cs + ClientTypes.cs stubs (no game DLLs required).
+      # -----------------------------------------------------------------------
+      - name: Build TitlesSystemClientMod
+        run: |
+          dotnet build TitlesSystemClientMod/TitlesSystemClientMod.csproj \
             -c Release \
             -p:OutputPath=bin/Release
         working-directory: ${{ github.workspace }}
