@@ -1,11 +1,11 @@
 # 7D2D Titles System
 
-A **server-side** mod for **7 Days to Die** (v2.5) that gives players apocalyptic rank titles based on zombie kills. Titles are displayed above each player's model and announced in chat on rank-up.
+A **server-side** mod for **7 Days to Die** (v2.5) that gives players apocalyptic rank titles based on zombie kills. Titles are displayed in the **Tab scoreboard** and announced in chat on rank-up.
 
 ## Features
 
 - 🧟 **30 progressive ranks** based on zombie kills — from *Freshly Irradiated Civilian* to *Last Hope of Humanity*
-- 🪧 **Name display** — short rank title shown in brackets above each player's model (`[Warlord] PlayerName`)
+- 🪧 **Tab scoreboard display** — rank prefix shown in the player list (`[Warlord] PlayerName`)
 - 📢 **Rank-up announcements** — global server chat notification when a player levels up
 - 💾 **Persistent data** — kill counts and ranks survive server restarts, stored per world save
 - 📊 **Player statistics** — track deaths, kill streaks, playtime, K/D ratio, kills/hour, and weapon usage
@@ -20,6 +20,10 @@ A **server-side** mod for **7 Days to Die** (v2.5) that gives players apocalypti
 2. Copy `TitlesSystem/` (containing `ModInfo.xml`, `TitlesSystem.dll`, and `Config/TitlesRanks.xml`) into your server's `Mods/` directory.
 3. Restart the server.
 
+### Optional: Rank Panel (client-side add-on)
+
+`TitlesSystemClientMod` adds a dedicated **Rank Panel** window to the game client. Type `rankpanel` (alias `rp`) in the console to open it. Install by copying `TitlesSystemClientMod/` into the **client's** `Mods/` folder — no changes to the server needed.
+
 ## Configuration
 
 Edit `Config/TitlesRanks.xml` to customise settings and ranks. Changes take effect on the next server restart.
@@ -27,7 +31,7 @@ Edit `Config/TitlesRanks.xml` to customise settings and ranks. Changes take effe
 ### Core Settings
 ```xml
 <Settings>
-    <ShowRankInName value="true"/>              <!-- show rank above player head -->
+    <ShowRankInName value="true"/>              <!-- show rank in Tab scoreboard -->
     <AnnounceRankUp value="true"/>              <!-- broadcast rank-up in chat -->
     <AutoSaveIntervalMinutes value="5"/>        <!-- 0 = save on disconnect only -->
     <ShowLeaderboardOnLogin value="true"/>      <!-- show leaderboard when players join -->
