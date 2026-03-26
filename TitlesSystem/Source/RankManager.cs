@@ -468,6 +468,13 @@ namespace TitlesSystem
 
         private string GetOriginalName(ClientInfo clientInfo)
         {
+            // clientInfo.playerName is the authoritative, unmodified platform name.
+            // Prefer it over entityName, which may already carry a title prefix
+            // if the player previously connected in the same session, causing
+            // stacked prefixes like "[NewRank] [OldRank] PlayerName" on rank-up.
+            if (!string.IsNullOrEmpty(clientInfo.playerName))
+                return clientInfo.playerName;
+
             try
             {
                 World world = GameManager.Instance?.World;
@@ -482,9 +489,9 @@ namespace TitlesSystem
                     }
                 }
             }
-            catch { /* fall through to clientInfo fallback */ }
+            catch { /* fall through */ }
 
-            return !string.IsNullOrEmpty(clientInfo.playerName) ? clientInfo.playerName : "Unknown";
+            return "Unknown";
         }
 
         private static ClientInfo GetClientInfo(string playerId)
