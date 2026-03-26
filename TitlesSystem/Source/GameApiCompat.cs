@@ -330,12 +330,120 @@ namespace TitlesSystem
             }
         }
 
-        public static void MarkPlayerNameDirty(EntityPlayer player)
+        /// <summary>
+        /// Marks the player entity dirty so the server sends its updated stats (including
+        /// entityName) to all clients, and also attempts to broadcast a
+        /// NetPackageEntityNameChange packet directly.  The direct broadcast is necessary
+        /// because in 7DTD v2.x the NetPackagePlayerStats packet that is triggered by the
+        /// dirty flags may not include entityName.
+        /// </summary>
+        public static void MarkPlayerNameDirty(EntityPlayer player, int entityId = -1)
         {
             if (player == null) return;
 
+            // Primary: set dirty flags so the server re-broadcasts player stats on the next tick.
             TrySetMemberValue(player, "bPlayerDirty", true);
             TrySetMemberValue(player, "bPlayerStatsChanged", true);
+
+            // Secondary: explicitly send a NetPackageEntityNameChange to all connected clients.
+            // This is more reliable across game versions for syncing entityName changes.
+            if (entityId < 0)
+            {
+                object idObj = GetMemberValue(player, "entityId");
+                if (idObj is int id) entityId = id;
+            }
+
+            if (entityId >= 0)
+                TrySendEntityNameChange(entityId, player.entityName);
+        }
+
+        // Cached type references — resolved once on first use and reused for all
+        // subsequent calls, so the AppDomain assembly scan is only paid once per
+        // server lifetime.
+        private static Type _netPkgManagerType;
+        private static Type _netPkgEntityNameChangeType;
+        private static bool _netPkgTypesResolved;
+
+        private static void ResolveNetPackageTypes()
+        {
+            if (_netPkgTypesResolved) return;
+            _netPkgTypesResolved = true;
+
+            foreach (var asm in AppDomain.CurrentDomain.GetAssemblies())
+            {
+                try
+                {
+                    if (_netPkgManagerType == null)
+                        _netPkgManagerType = asm.GetType("NetPackageManager");
+                    if (_netPkgEntityNameChangeType == null)
+                        _netPkgEntityNameChangeType = asm.GetType("NetPackageEntityNameChange");
+                }
+                catch { /* skip assemblies that can't be reflected */ }
+
+                if (_netPkgManagerType != null && _netPkgEntityNameChangeType != null)
+                    break;
+            }
+
+            if (_netPkgManagerType == null)
+                Log.Warning("[TitlesSystem] NetPackageManager not found — entity-name packets will rely on dirty flags only.");
+            if (_netPkgEntityNameChangeType == null)
+                Log.Warning("[TitlesSystem] NetPackageEntityNameChange not found — entity-name packets will rely on dirty flags only.");
+        }
+
+        /// <summary>
+        /// Sends a NetPackageEntityNameChange for <paramref name="entityId"/> to every
+        /// connected client via ConnectionManager, using reflection so the code compiles
+        /// without direct references to the game DLLs.
+        /// </summary>
+        private static void TrySendEntityNameChange(int entityId, string newName)
+        {
+            if (entityId < 0 || string.IsNullOrEmpty(newName)) return;
+
+            try
+            {
+                ResolveNetPackageTypes();
+                if (_netPkgManagerType == null || _netPkgEntityNameChangeType == null) return;
+
+                // pkg = NetPackageManager.GetPackage<NetPackageEntityNameChange>()
+                MethodInfo getPackage = _netPkgManagerType.GetMethod(
+                    "GetPackage", BindingFlags.Public | BindingFlags.Static);
+                if (getPackage == null) return;
+
+                object pkg = getPackage
+                    .MakeGenericMethod(_netPkgEntityNameChangeType)
+                    .Invoke(null, null);
+                if (pkg == null) return;
+
+                // pkg.Setup(entityId, newName)  — parameter count may vary by version
+                MethodInfo setup = _netPkgEntityNameChangeType.GetMethod(
+                    "Setup", BindingFlags.Public | BindingFlags.Instance);
+                if (setup != null)
+                {
+                    ParameterInfo[] ps = setup.GetParameters();
+                    if (ps.Length >= 2)
+                        setup.Invoke(pkg, new object[] { entityId, newName });
+                    else if (ps.Length == 1)
+                        setup.Invoke(pkg, new object[] { entityId });
+                }
+
+                // ConnectionManager.Instance.SendPackage(pkg [, true])
+                object cm = ConnectionManager.Instance;
+                if (cm == null) return;
+
+                MethodInfo send = cm.GetType().GetMethod(
+                    "SendPackage", BindingFlags.Public | BindingFlags.Instance);
+                if (send == null) return;
+
+                ParameterInfo[] sendPs = send.GetParameters();
+                if (sendPs.Length == 1)
+                    send.Invoke(cm, new object[] { pkg });
+                else if (sendPs.Length >= 2)
+                    send.Invoke(cm, new object[] { pkg, true });
+            }
+            catch (Exception ex)
+            {
+                Log.Warning($"[TitlesSystem] TrySendEntityNameChange failed: {ex.Message}");
+            }
         }
 
         private static object InvokeMember(object target, string methodName, params object[] args)

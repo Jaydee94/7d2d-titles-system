@@ -457,7 +457,7 @@ namespace TitlesSystem
                 if (player.entityName != newName)
                 {
                     player.entityName = newName;
-                    GameApiCompat.MarkPlayerNameDirty(player);
+                    GameApiCompat.MarkPlayerNameDirty(player, entityId);
                 }
             }
             catch (Exception e)
