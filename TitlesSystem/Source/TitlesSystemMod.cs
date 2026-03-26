@@ -41,18 +41,6 @@ namespace TitlesSystem
                     Log.Warning($"[TitlesSystem] Chat command intercept could not be applied: {chatPatchEx.Message}");
                 }
 
-                // Player name display patch: intercepts GetPlayerName() (and similar methods)
-                // so that the rank title appears before the player name in all name contexts,
-                // including the 3D overhead display above the player model.
-                try
-                {
-                    TitlesSystem.Patches.PlayerNamePatch.ApplyPatch(_harmony);
-                }
-                catch (Exception namePatchEx)
-                {
-                    Log.Warning($"[TitlesSystem] Player name patch could not be applied: {namePatchEx.Message}");
-                }
-
                 // Subscribe to game events
                 ModEvents.GameStartDone.RegisterHandler(OnGameStartDone);
                 ModEvents.PlayerSpawnedInWorld.RegisterHandler(OnPlayerSpawnedInWorld);

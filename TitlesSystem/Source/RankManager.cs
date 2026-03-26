@@ -208,23 +208,6 @@ namespace TitlesSystem
             return data;
         }
 
-        /// <summary>
-        /// Returns the short title (e.g. "Civilian") for the given player if rank data
-        /// is loaded and ShowRankInName is enabled, otherwise null.
-        /// Used by <see cref="Patches.PlayerNamePatch"/> to prepend the title to the
-        /// name returned by the game's player name retrieval methods.
-        /// </summary>
-        public string GetPlayerShortTitle(string playerId)
-        {
-            if (!_showRankInName) return null;
-            if (string.IsNullOrEmpty(playerId)) return null;
-            if (!_playerData.TryGetValue(playerId, out var data)) return null;
-            if (_ranks.Count == 0) return null;
-
-            int idx = Math.Max(0, Math.Min(data.CurrentRankIndex, _ranks.Count - 1));
-            return _ranks[idx].ShortTitle;
-        }
-
         // ------------------------------------------------------------------ //
         //  Event Handlers (called from TitlesSystemMod)
         // ------------------------------------------------------------------ //
@@ -485,12 +468,6 @@ namespace TitlesSystem
 
         private string GetOriginalName(ClientInfo clientInfo)
         {
-            // clientInfo.playerName is the authoritative, unmodified platform name.
-            // Prefer it over entityName, which may already carry a title prefix
-            // if the player previously connected in the same session.
-            if (!string.IsNullOrEmpty(clientInfo.playerName))
-                return clientInfo.playerName;
-
             try
             {
                 World world = GameManager.Instance?.World;
@@ -505,9 +482,9 @@ namespace TitlesSystem
                     }
                 }
             }
-            catch { /* fall through */ }
+            catch { /* fall through to clientInfo fallback */ }
 
-            return "Unknown";
+            return !string.IsNullOrEmpty(clientInfo.playerName) ? clientInfo.playerName : "Unknown";
         }
 
         private static ClientInfo GetClientInfo(string playerId)
