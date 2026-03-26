@@ -1,8 +1,0 @@
-/home/runner/work/7d2d-titles-system/7d2d-titles-system/TitlesSystemClientMod/obj/Release/TitlesSystemClientMod.csproj.AssemblyReference.cache
-/home/runner/work/7d2d-titles-system/7d2d-titles-system/TitlesSystemClientMod/obj/Release/TitlesSystemClientMod.GeneratedMSBuildEditorConfig.editorconfig
-/home/runner/work/7d2d-titles-system/7d2d-titles-system/TitlesSystemClientMod/obj/Release/TitlesSystemClientMod.csproj.CoreCompileInputs.cache
-/home/runner/work/7d2d-titles-system/7d2d-titles-system/TitlesSystemClientMod/obj/Release/TitlesSystemClientMod.sourcelink.json
-/home/runner/work/7d2d-titles-system/7d2d-titles-system/TitlesSystemClientMod/bin/Release/TitlesSystemClientMod.dll
-/home/runner/work/7d2d-titles-system/7d2d-titles-system/TitlesSystemClientMod/bin/Release/TitlesSystemClientMod.pdb
-/home/runner/work/7d2d-titles-system/7d2d-titles-system/TitlesSystemClientMod/obj/Release/TitlesSystemClientMod.dll
-/home/runner/work/7d2d-titles-system/7d2d-titles-system/TitlesSystemClientMod/obj/Release/TitlesSystemClientMod.pdb
