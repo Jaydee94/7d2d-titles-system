@@ -3,12 +3,17 @@
 #
 # Usage:
 #   .\deploy-windows.ps1
-#   .\deploy-windows.ps1 -ServerRoot "C:\7dtd"
-#   .\deploy-windows.ps1 -ServerRoot "C:\7dtd" -StartServer
+#   .\deploy-windows.ps1 -ServerRoot "C:\7dtd-server"
+#   .\deploy-windows.ps1 -ServerRoot "C:\7dtd-server" -GameRoot "C:\7dtd"
+#   .\deploy-windows.ps1 -ServerRoot "C:\7dtd-server" -StartServer
 #
 # Parameters:
 #   -ServerRoot   Path to the 7 Days to Die Dedicated Server installation.
 #                 Auto-detected from common Steam locations if omitted.
+#   -GameRoot     Path to the 7 Days to Die game client installation (used to
+#                 build and deploy the optional TitlesSystemClientMod add-on).
+#                 Auto-detected from common Steam client locations if omitted.
+#                 If no game client is found, the client mod step is skipped.
 #   -StartServer  If specified, the dedicated server is launched automatically
 #                 after a successful deploy.
 # =============================================================================
@@ -16,6 +21,7 @@
 [CmdletBinding()]
 param (
     [string] $ServerRoot = "",
+    [string] $GameRoot   = "",
     [switch] $StartServer
 )
 
@@ -23,8 +29,9 @@ $ErrorActionPreference = "Stop"
 
 # --- Resolve paths ------------------------------------------------------------
 
-$ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
-$ModDir    = Join-Path $ScriptDir "TitlesSystem"
+$ScriptDir      = Split-Path -Parent $MyInvocation.MyCommand.Path
+$ModDir         = Join-Path $ScriptDir "TitlesSystem"
+$ClientModDir   = Join-Path $ScriptDir "TitlesSystemClientMod"
 
 # Auto-detect ServerRoot from common Steam installation paths
 if (-not $ServerRoot) {
@@ -37,6 +44,22 @@ if (-not $ServerRoot) {
     foreach ($Candidate in $Candidates) {
         if (Test-Path $Candidate) {
             $ServerRoot = $Candidate
+            break
+        }
+    }
+}
+
+# Auto-detect GameRoot (game client) from common Steam installation paths
+if (-not $GameRoot) {
+    $ClientCandidates = @(
+        "C:\Program Files (x86)\Steam\steamapps\common\7 Days to Die",
+        "C:\Program Files\Steam\steamapps\common\7 Days to Die",
+        "D:\SteamLibrary\steamapps\common\7 Days to Die",
+        "E:\SteamLibrary\steamapps\common\7 Days to Die"
+    )
+    foreach ($Candidate in $ClientCandidates) {
+        if (Test-Path $Candidate) {
+            $GameRoot = $Candidate
             break
         }
     }
@@ -66,15 +89,42 @@ if (-not (Test-Path (Join-Path $ManagedDir "Assembly-CSharp.dll"))) {
     }
 }
 
+# Determine whether the game client DLLs are available for the client mod.
+# The client mod can fall back to CI stubs if the full game client is absent.
+$ClientManagedDir    = if ($GameRoot) { Join-Path $GameRoot "7DaysToDie_Data\Managed" } else { $null }
+$UseClientStubs      = $true
+$DeployClientMod     = $false
+
+if ($ClientManagedDir -and (Test-Path (Join-Path $ClientManagedDir "Assembly-CSharp.dll"))) {
+    $UseClientStubs  = $false
+    $DeployClientMod = $true
+} elseif ($GameRoot) {
+    # GameRoot was provided/detected but DLLs not found — still deploy, build with stubs
+    Write-Warning "Assembly-CSharp.dll not found in $ClientManagedDir - building client mod with CI stubs."
+    $DeployClientMod = $true
+}
+
 Write-Host ""
 Write-Host "=== 7D2D Titles System - Windows Deploy ===" -ForegroundColor Cyan
-Write-Host "  Mod directory : $ModDir"
-Write-Host "  Server root   : $ServerRoot"
-Write-Host "  Deploy to     : $ServerRoot\Mods\TitlesSystem"
+Write-Host "  Mod directory        : $ModDir"
+Write-Host "  Server root          : $ServerRoot"
+Write-Host "  Deploy server mod to : $ServerRoot\Mods\TitlesSystem"
 if ($UseStubs) {
-    Write-Host "  Build mode    : CI stubs (no game DLLs found)" -ForegroundColor Yellow
+    Write-Host "  Server build mode    : CI stubs (no game DLLs found)" -ForegroundColor Yellow
 } else {
-    Write-Host "  Build mode    : Game DLLs"
+    Write-Host "  Server build mode    : Game DLLs"
+}
+if ($DeployClientMod) {
+    Write-Host "  Client mod dir       : $ClientModDir"
+    Write-Host "  Game root            : $GameRoot"
+    Write-Host "  Deploy client mod to : $GameRoot\Mods\TitlesSystemClientMod"
+    if ($UseClientStubs) {
+        Write-Host "  Client build mode    : CI stubs (no game client DLLs found)" -ForegroundColor Yellow
+    } else {
+        Write-Host "  Client build mode    : Game DLLs"
+    }
+} else {
+    Write-Host "  Client mod           : skipped (no game client found; use -GameRoot to enable)" -ForegroundColor Yellow
 }
 Write-Host ""
 
@@ -108,6 +158,7 @@ Example (Windows): winget install Microsoft.DotNet.SDK.8
 
 # --- Build --------------------------------------------------------------------
 
+# Build server mod
 Push-Location $ModDir
 try {
     $BuildSucceeded = $false
@@ -147,6 +198,55 @@ try {
     Pop-Location
 }
 
+# Build client mod (if game client was found or specified)
+if ($DeployClientMod) {
+    if (-not (Test-Path $ClientModDir)) {
+        Write-Warning "TitlesSystemClientMod directory not found at $ClientModDir - skipping client mod build."
+        $DeployClientMod = $false
+    }
+}
+
+if ($DeployClientMod) {
+    Push-Location $ClientModDir
+    try {
+        $ClientBuildSucceeded = $false
+
+        if ($UseClientStubs) {
+            $env:GITHUB_ACTIONS = "true"
+            & $DotnetExe build TitlesSystemClientMod.csproj -c Release
+            Remove-Item Env:GITHUB_ACTIONS -ErrorAction SilentlyContinue
+
+            if ($LASTEXITCODE -eq 0) {
+                $ClientBuildSucceeded = $true
+            }
+        } else {
+            & $DotnetExe build TitlesSystemClientMod.csproj -p:GameRoot="$GameRoot" -c Release
+
+            if ($LASTEXITCODE -eq 0) {
+                $ClientBuildSucceeded = $true
+            } else {
+                Write-Warning "Client mod build against game DLLs failed. Retrying with CI stubs..."
+                $env:GITHUB_ACTIONS = "true"
+                & $DotnetExe build TitlesSystemClientMod.csproj -c Release
+                Remove-Item Env:GITHUB_ACTIONS -ErrorAction SilentlyContinue
+
+                if ($LASTEXITCODE -eq 0) {
+                    $ClientBuildSucceeded = $true
+                    $UseClientStubs = $true
+                    Write-Host "[TitlesSystemClientMod] Build succeeded using CI stubs fallback." -ForegroundColor Yellow
+                }
+            }
+        }
+
+        if (-not $ClientBuildSucceeded) {
+            Write-Warning "TitlesSystemClientMod build failed - client mod will not be deployed."
+            $DeployClientMod = $false
+        }
+    } finally {
+        Pop-Location
+    }
+}
+
 # --- Deploy -------------------------------------------------------------------
 
 $ModDest   = Join-Path $ServerRoot "Mods\TitlesSystem"
@@ -166,11 +266,39 @@ Copy-Item (Join-Path $ModDir "ModInfo.xml")              -Destination $ModDest  
 Copy-Item (Join-Path $ModDir "Config\TitlesRanks.xml")   -Destination $ConfigDest -Force
 Write-Host "[TitlesSystem] Deployed ModInfo.xml and Config\TitlesRanks.xml" -ForegroundColor Green
 
+# Deploy client mod (if built successfully)
+if ($DeployClientMod) {
+    $ClientModDest       = Join-Path $GameRoot "Mods\TitlesSystemClientMod"
+    $ClientConfigXUiDest = Join-Path $ClientModDest "Config\XUi"
+
+    New-Item -ItemType Directory -Force -Path $ClientConfigXUiDest | Out-Null
+
+    $ClientDllSource = Join-Path $ClientModDir "bin\Release\TitlesSystemClientMod.dll"
+    if (Test-Path $ClientDllSource) {
+        Copy-Item $ClientDllSource -Destination $ClientModDest -Force
+        Write-Host "[TitlesSystemClientMod] Deployed TitlesSystemClientMod.dll" -ForegroundColor Green
+    } else {
+        Write-Warning "Client DLL not found at $ClientDllSource - skipping client DLL copy."
+    }
+
+    Copy-Item (Join-Path $ClientModDir "ModInfo.xml")              -Destination $ClientModDest     -Force
+    Copy-Item (Join-Path $ClientModDir "Config\XUi\windows.xml")   -Destination $ClientConfigXUiDest -Force
+    Write-Host "[TitlesSystemClientMod] Deployed ModInfo.xml and Config\XUi\windows.xml" -ForegroundColor Green
+}
+
 Write-Host ""
 Write-Host "=== Deploy complete! ===" -ForegroundColor Cyan
 Write-Host ""
-Write-Host "Mod installed to:"
+Write-Host "Server mod installed to:"
 Write-Host "  $ModDest"
+if ($DeployClientMod) {
+    Write-Host ""
+    Write-Host "Client mod installed to:"
+    Write-Host "  $(Join-Path $GameRoot "Mods\TitlesSystemClientMod")"
+    Write-Host ""
+    Write-Host "In-game, open the Rank Panel with the console command:"
+    Write-Host '  rankpanel   (alias: rp)'
+}
 Write-Host ""
 Write-Host "To test ranks, connect to the server console and run:"
 Write-Host '  rank set YourSteamName 1000'

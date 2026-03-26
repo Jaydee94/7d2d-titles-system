@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+  TitlesRankPanel window.
+  Opened / closed via the client console command:  rankpanel  (alias: rp)
+
+  Shows up to 15 online players with the rank prefix their entityName
+  carries, which is set server-side by TitlesSystem.dll.
+-->
+<windows>
+    <window name="TitlesRankPanel"
+            controller="TitlesSystem.Client.XUiC_RankPanel"
+            anchor="MiddleCenter"
+            pos="0,0"
+            width="560"
+            height="460"
+            depth="50">
+        <panel>
+            <rect width="560" height="460">
+
+                <!-- Title -->
+                <label pos="0,200" width="560" height="36"
+                       text="Online Player Ranks"
+                       style="heading_label" />
+
+                <!-- Column headers -->
+                <label pos="-220,178" width="30"  height="22" text="#"      color="0.7,0.7,0.7,1" />
+                <label pos="-90,178"  width="170" height="22" text="Player" color="0.7,0.7,0.7,1" />
+                <label pos="90,178"   width="150" height="22" text="Rank"   color="0.7,0.7,0.7,1" />
+
+                <!-- Row 0 -->
+                <label pos="-220,156" width="30"  height="22" binding="pos_0"  />
+                <label pos="-90,156"  width="170" height="22" binding="name_0" />
+                <label pos="90,156"   width="150" height="22" binding="rank_0" />
+
+                <!-- Row 1 -->
+                <label pos="-220,134" width="30"  height="22" binding="pos_1"  />
+                <label pos="-90,134"  width="170" height="22" binding="name_1" />
+                <label pos="90,134"   width="150" height="22" binding="rank_1" />
+
+                <!-- Row 2 -->
+                <label pos="-220,112" width="30"  height="22" binding="pos_2"  />
+                <label pos="-90,112"  width="170" height="22" binding="name_2" />
+                <label pos="90,112"   width="150" height="22" binding="rank_2" />
+
+                <!-- Row 3 -->
+                <label pos="-220,90" width="30"  height="22" binding="pos_3"  />
+                <label pos="-90,90"  width="170" height="22" binding="name_3" />
+                <label pos="90,90"   width="150" height="22" binding="rank_3" />
+
+                <!-- Row 4 -->
+                <label pos="-220,68" width="30"  height="22" binding="pos_4"  />
+                <label pos="-90,68"  width="170" height="22" binding="name_4" />
+                <label pos="90,68"   width="150" height="22" binding="rank_4" />
+
+                <!-- Row 5 -->
+                <label pos="-220,46" width="30"  height="22" binding="pos_5"  />
+                <label pos="-90,46"  width="170" height="22" binding="name_5" />
+                <label pos="90,46"   width="150" height="22" binding="rank_5" />
+
+                <!-- Row 6 -->
+                <label pos="-220,24" width="30"  height="22" binding="pos_6"  />
+                <label pos="-90,24"  width="170" height="22" binding="name_6" />
+                <label pos="90,24"   width="150" height="22" binding="rank_6" />
+
+                <!-- Row 7 -->
+                <label pos="-220,2" width="30"  height="22" binding="pos_7"  />
+                <label pos="-90,2"  width="170" height="22" binding="name_7" />
+                <label pos="90,2"   width="150" height="22" binding="rank_7" />
+
+                <!-- Row 8 -->
+                <label pos="-220,-20" width="30"  height="22" binding="pos_8"  />
+                <label pos="-90,-20"  width="170" height="22" binding="name_8" />
+                <label pos="90,-20"   width="150" height="22" binding="rank_8" />
+
+                <!-- Row 9 -->
+                <label pos="-220,-42" width="30"  height="22" binding="pos_9"  />
+                <label pos="-90,-42"  width="170" height="22" binding="name_9" />
+                <label pos="90,-42"   width="150" height="22" binding="rank_9" />
+
+                <!-- Row 10 -->
+                <label pos="-220,-64" width="30"  height="22" binding="pos_10"  />
+                <label pos="-90,-64"  width="170" height="22" binding="name_10" />
+                <label pos="90,-64"   width="150" height="22" binding="rank_10" />
+
+                <!-- Row 11 -->
+                <label pos="-220,-86" width="30"  height="22" binding="pos_11"  />
+                <label pos="-90,-86"  width="170" height="22" binding="name_11" />
+                <label pos="90,-86"   width="150" height="22" binding="rank_11" />
+
+                <!-- Row 12 -->
+                <label pos="-220,-108" width="30"  height="22" binding="pos_12"  />
+                <label pos="-90,-108"  width="170" height="22" binding="name_12" />
+                <label pos="90,-108"   width="150" height="22" binding="rank_12" />
+
+                <!-- Row 13 -->
+                <label pos="-220,-130" width="30"  height="22" binding="pos_13"  />
+                <label pos="-90,-130"  width="170" height="22" binding="name_13" />
+                <label pos="90,-130"   width="150" height="22" binding="rank_13" />
+
+                <!-- Row 14 -->
+                <label pos="-220,-152" width="30"  height="22" binding="pos_14"  />
+                <label pos="-90,-152"  width="170" height="22" binding="name_14" />
+                <label pos="90,-152"   width="150" height="22" binding="rank_14" />
+
+                <!-- Close button -->
+                <button pos="0,-200" width="120" height="36"
+                        text="Close"
+                        action="Close" />
+
+            </rect>
+        </panel>
+    </window>
+</windows>

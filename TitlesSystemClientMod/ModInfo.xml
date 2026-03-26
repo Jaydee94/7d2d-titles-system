@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xml>
+    <Name value="TitlesSystemClientMod"/>
+    <DisplayName value="7D2D Titles System – Rank Panel"/>
+    <Version value="1.1.0"/>
+    <Author value="Jaydee94"/>
+    <Description value="Optional client-side add-on for the Titles System server mod. Adds a Rank Panel window that shows all online players with their current rank prefix. Install this modlet on the client to complement the server-side TitlesSystem mod. Use the 'rankpanel' (alias 'rp') console command in-game to open or close the panel."/>
+    <Website value="https://github.com/Jaydee94/7d2d-titles-system"/>
+</xml>
