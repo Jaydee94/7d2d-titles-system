@@ -1,6 +1,15 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
+    <!-- Change this to your local 7 Days to Die installation path -->
+    <GameRoot Condition="'$(GameRoot)' == '' and Exists('/home/steam/.steam/SteamApps/common/7 Days to Die Dedicated Server')">/home/steam/.steam/SteamApps/common/7 Days to Die Dedicated Server</GameRoot>
+    <GameRoot Condition="'$(GameRoot)' == '' and Exists('/opt/7dtd')">/opt/7dtd</GameRoot>
+    <GameRoot Condition="'$(GameRoot)' == ''">C:\Program Files (x86)\Steam\steamapps\common\7 Days To Die</GameRoot>
+
+    <ManagedDir Condition="Exists('$(GameRoot)/7DaysToDie_Data/Managed')">$(GameRoot)/7DaysToDie_Data/Managed</ManagedDir>
+    <ManagedDir Condition="'$(ManagedDir)' == '' and Exists('$(GameRoot)/7DaysToDieServer_Data/Managed')">$(GameRoot)/7DaysToDieServer_Data/Managed</ManagedDir>
+    <ManagedDir Condition="'$(ManagedDir)' == ''">$(GameRoot)/7DaysToDie_Data/Managed</ManagedDir>
+
     <AssemblyName>TitlesSystem</AssemblyName>
     <RootNamespace>TitlesSystem</RootNamespace>
     <TargetFramework>net48</TargetFramework>
@@ -11,77 +20,50 @@
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
+
+    <HarmonyPath Condition="Exists('$(ManagedDir)/0Harmony.dll')">$(ManagedDir)/0Harmony.dll</HarmonyPath>
+    <HarmonyPath Condition="'$(HarmonyPath)' == '' and Exists('$(GameRoot)/Mods/0_TFP_Harmony/0Harmony.dll')">$(GameRoot)/Mods/0_TFP_Harmony/0Harmony.dll</HarmonyPath>
+
+    <!-- Do not copy any runtime files – the game already has them -->
+    <CopyLocalLockFileAssemblies>false</CopyLocalLockFileAssemblies>
   </PropertyGroup>
 
-  <!--
-    7 Days to Die game DLL references.
-    Adjust GAME_ROOT to your server/client installation path.
-
-    Linux dedicated server default:
-      ~/.steam/SteamApps/common/7 Days to Die Dedicated Server
-    Windows default:
-      C:\Program Files (x86)\Steam\steamapps\common\7 Days To Die
-
-    IMPORTANT: Private=False prevents the game DLLs from being copied
-    into the mod output directory (the game already loads them).
-  -->
-  <PropertyGroup>
-    <GameRoot Condition="'$(GameRoot)' == '' and Exists('/home/steam/.steam/SteamApps/common/7 Days to Die Dedicated Server')">/home/steam/.steam/SteamApps/common/7 Days to Die Dedicated Server</GameRoot>
-    <GameRoot Condition="'$(GameRoot)' == '' and Exists('/opt/7dtd')">/opt/7dtd</GameRoot>
-    <GameRoot Condition="'$(GameRoot)' == ''">C:\Program Files (x86)\Steam\steamapps\common\7 Days To Die</GameRoot>
-    <ManagedDir Condition="Exists('$(GameRoot)/7DaysToDie_Data/Managed')">$(GameRoot)/7DaysToDie_Data/Managed</ManagedDir>
-    <ManagedDir Condition="'$(ManagedDir)' == '' and Exists('$(GameRoot)/7DaysToDieServer_Data/Managed')">$(GameRoot)/7DaysToDieServer_Data/Managed</ManagedDir>
-    <ManagedDir Condition="'$(ManagedDir)' == ''">$(GameRoot)/7DaysToDie_Data/Managed</ManagedDir>
-    <RequireRealGameDlls Condition="'$(RequireRealGameDlls)' == ''">false</RequireRealGameDlls>
-  </PropertyGroup>
-
-  <Target Name="FailIfRealGameDllsRequiredButMissing" BeforeTargets="ResolveReferences"
-          Condition="'$(RequireRealGameDlls)' == 'true' and !Exists('$(ManagedDir)/Assembly-CSharp.dll')">
-    <Error Text="RequireRealGameDlls=true but Assembly-CSharp.dll was not found under ManagedDir='$(ManagedDir)'. Set GameRoot to a valid 7DTD install path for release builds." />
-  </Target>
-
-  <ItemGroup Condition="Exists('$(ManagedDir)/Assembly-CSharp.dll')">
+  <ItemGroup>
+    <!-- Core game assembly -->
     <Reference Include="Assembly-CSharp">
       <HintPath>$(ManagedDir)/Assembly-CSharp.dll</HintPath>
-      <Private>False</Private>
+      <Private>false</Private>
     </Reference>
-    <Reference Include="UnityEngine">
-      <HintPath>$(ManagedDir)/UnityEngine.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
+
+    <!-- Unity engine core -->
     <Reference Include="UnityEngine.CoreModule">
       <HintPath>$(ManagedDir)/UnityEngine.CoreModule.dll</HintPath>
-      <Private>False</Private>
+      <Private>false</Private>
     </Reference>
-    <Reference Include="0Harmony" Condition="Exists('$(ManagedDir)/0Harmony.dll')">
-      <HintPath>$(ManagedDir)/0Harmony.dll</HintPath>
-      <Private>False</Private>
+
+    <Reference Include="UnityEngine">
+      <HintPath>$(ManagedDir)/UnityEngine.dll</HintPath>
+      <Private>false</Private>
     </Reference>
-    <PackageReference Include="Lib.Harmony" Version="2.2.2" Condition="!Exists('$(ManagedDir)/0Harmony.dll')" />
+
+    <!-- Harmony patching library (shipped with the game) -->
+    <Reference Include="0Harmony" Condition="'$(HarmonyPath)' != ''">
+      <HintPath>$(HarmonyPath)</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <PackageReference Include="Lib.Harmony" Version="2.2.2" Condition="'$(HarmonyPath)' == ''" />
   </ItemGroup>
 
-  <!--
-    Fallback build mode: when game DLLs are unavailable, compile with local stub
-    types + Harmony from NuGet.
+  <Target Name="FailIfGameDllsMissing" BeforeTargets="ResolveReferences"
+          Condition="!Exists('$(ManagedDir)/Assembly-CSharp.dll') or !Exists('$(ManagedDir)/UnityEngine.CoreModule.dll')">
+    <Error Text="Required 7DTD build references were not found. Set GameRoot to a valid client or dedicated server install, or pass -p:GameRoot=... in CI." />
+  </Target>
 
-    IMPORTANT: GameTypes.cs is compiled directly into TitlesSystem.dll (not via
-    ProjectReference) so no separate GameStubs.dll is needed at runtime.
-    Harmony is referenced for compilation only (ExcludeAssets=runtime) because
-    the server already loads 0Harmony from the 0_TFP_Harmony mod folder.
-  -->
-  <ItemGroup Condition="!Exists('$(ManagedDir)/Assembly-CSharp.dll') and '$(RequireRealGameDlls)' != 'true'">
-    <!-- Stub types compiled inline — no external GameStubs.dll dependency at runtime -->
-    <Compile Include="../libs/Stubs/GameTypes.cs" />
-    <!-- Harmony for compilation only; runtime copy excluded (server provides 0Harmony via 0_TFP_Harmony) -->
-    <PackageReference Include="Lib.Harmony" Version="2.2.2">
-      <ExcludeAssets>runtime</ExcludeAssets>
-    </PackageReference>
+  <ItemGroup>
+    <Compile Include="Source\**\*.cs" />
   </ItemGroup>
 
-  <!--
-    Post-build: copy the compiled DLL to the game's Mods folder so changes
-    take effect immediately during development.  Set MODS_DIR to override.
-  -->
+  <!-- Post-build: copy the compiled DLL to the game's Mods folder (set MODS_DIR to enable) -->
   <Target Name="CopyToMods" AfterTargets="Build" Condition="'$(MODS_DIR)' != ''">
     <Copy SourceFiles="$(OutputPath)/$(AssemblyName).dll"
           DestinationFolder="$(MODS_DIR)/TitlesSystem"
