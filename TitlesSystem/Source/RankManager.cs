@@ -39,6 +39,8 @@ namespace TitlesSystem
         private int _showLeaderboardIntervalHours = 6;
         private int _leaderboardTopPlayers = 10;
         private DateTime _lastLeaderboardTime = DateTime.MinValue;
+        private string _announcementColor = "FFD700";
+        private string _leaderboardColor = "00BFFF";
 
         private static readonly XmlSerializer PlayerDataSerializer =
             new XmlSerializer(typeof(PlayerRankData));
@@ -133,6 +135,14 @@ namespace TitlesSystem
             XmlNode leaderboardTopNode = doc.SelectSingleNode("/TitlesConfig/Settings/LeaderboardTopPlayers");
             if (leaderboardTopNode?.Attributes?["value"] != null)
                 int.TryParse(leaderboardTopNode.Attributes["value"].Value, out _leaderboardTopPlayers);
+
+            XmlNode announcementColorNode = doc.SelectSingleNode("/TitlesConfig/Settings/AnnouncementColor");
+            if (announcementColorNode?.Attributes?["value"] != null)
+                _announcementColor = announcementColorNode.Attributes["value"].Value ?? string.Empty;
+
+            XmlNode leaderboardColorNode = doc.SelectSingleNode("/TitlesConfig/Settings/LeaderboardColor");
+            if (leaderboardColorNode?.Attributes?["value"] != null)
+                _leaderboardColor = leaderboardColorNode.Attributes["value"].Value ?? string.Empty;
 
             // Read ranks
             _ranks.Clear();
@@ -309,7 +319,7 @@ namespace TitlesSystem
                 if (_announceRankUp)
                 {
                     string message = $"[TitlesSystem] {data.OriginalName} has been promoted to [{newRank.Title}]! ({data.ZombieKills} zombies slain)";
-                    GameApiCompat.ChatMessageGlobal(message);
+                    GameApiCompat.ChatMessageGlobal(ColorizeMessage(message, _announcementColor));
                 }
             }
 
@@ -371,7 +381,7 @@ namespace TitlesSystem
                     // Broadcast each line to all players
                     foreach (var line in leaderboardLines)
                     {
-                        GameApiCompat.ChatMessageGlobal(line);
+                        GameApiCompat.ChatMessageGlobal(ColorizeMessage(line, _leaderboardColor));
                     }
 
                     Log.Out($"[TitlesSystem] Leaderboard broadcast to all players.");
@@ -415,7 +425,7 @@ namespace TitlesSystem
                 if (_announceRankUp)
                 {
                     string message = $"[TitlesSystem] {data.OriginalName} has been promoted to [{newRank.Title}]! ({data.ZombieKills} zombies slain)";
-                    GameApiCompat.ChatMessageGlobal(message);
+                    GameApiCompat.ChatMessageGlobal(ColorizeMessage(message, _announcementColor));
                 }
             }
 
@@ -433,6 +443,14 @@ namespace TitlesSystem
 
         private int ComputeRankIndex(int kills) =>
             RankCalculator.ComputeRankIndex(_ranks, kills);
+
+        /// <summary>
+        /// Wraps <paramref name="message"/> in 7DTD BBCode color tags when
+        /// <paramref name="colorHex"/> is a valid 6-character hex string.
+        /// Returns the original message unchanged if the color is empty or invalid.
+        /// </summary>
+        internal static string ColorizeMessage(string message, string colorHex) =>
+            ChatHelper.ColorizeMessage(message, colorHex);
 
         /// <summary>
         /// Modifies the EntityPlayer's entityName to "[ShortTitle] OriginalName"

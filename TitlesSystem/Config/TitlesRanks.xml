@@ -30,6 +30,16 @@
 
         <!-- Number of top players to display in leaderboard (max 50) -->
         <LeaderboardTopPlayers value="10"/>
+
+        <!--
+            Chat message colors in RRGGBB hex format (no '#' prefix).
+            Set to empty string to disable coloring.
+        -->
+        <!-- Color for rank-up announcement messages (default: gold) -->
+        <AnnouncementColor value="FFD700"/>
+
+        <!-- Color for leaderboard messages (default: cyan) -->
+        <LeaderboardColor value="00BFFF"/>
     </Settings>
 
     <Ranks>
