@@ -1,0 +1,11 @@
+{
+  "version": 2,
+  "dgSpecHash": "fDcRyuUU1MA=",
+  "success": true,
+  "projectFilePath": "\\\\wsl.localhost\\Ubuntu\\home\\jaydee\\git\\7d2d-titles-system\\libs\\Stubs\\GameStubs.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\janhe\\.nuget\\packages\\microsoft.netframework.referenceassemblies\\1.0.3\\microsoft.netframework.referenceassemblies.1.0.3.nupkg.sha512",
+    "C:\\Users\\janhe\\.nuget\\packages\\microsoft.netframework.referenceassemblies.net48\\1.0.3\\microsoft.netframework.referenceassemblies.net48.1.0.3.nupkg.sha512"
+  ],
+  "logs": []
+}

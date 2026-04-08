@@ -1,0 +1,8 @@
+\\wsl.localhost\Ubuntu\home\jaydee\git\7d2d-titles-system\libs\Stubs\obj\Release\net48\GameStubs.csproj.AssemblyReference.cache
+\\wsl.localhost\Ubuntu\home\jaydee\git\7d2d-titles-system\libs\Stubs\obj\Release\net48\GameStubs.GeneratedMSBuildEditorConfig.editorconfig
+\\wsl.localhost\Ubuntu\home\jaydee\git\7d2d-titles-system\libs\Stubs\obj\Release\net48\GameStubs.csproj.CoreCompileInputs.cache
+\\wsl.localhost\Ubuntu\home\jaydee\git\7d2d-titles-system\libs\Stubs\obj\Release\net48\GameStubs.sourcelink.json
+\\wsl.localhost\Ubuntu\home\jaydee\git\7d2d-titles-system\libs\Stubs\obj\Release\net48\GameStubs.dll
+\\wsl.localhost\Ubuntu\home\jaydee\git\7d2d-titles-system\libs\Stubs\obj\Release\net48\GameStubs.pdb
+\\wsl.localhost\Ubuntu\home\jaydee\git\7d2d-titles-system\libs\Stubs\bin\Release\GameStubs.dll
+\\wsl.localhost\Ubuntu\home\jaydee\git\7d2d-titles-system\libs\Stubs\bin\Release\GameStubs.pdb

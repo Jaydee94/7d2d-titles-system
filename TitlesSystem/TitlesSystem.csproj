@@ -20,6 +20,7 @@
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
 
     <HarmonyPath Condition="Exists('$(ManagedDir)/0Harmony.dll')">$(ManagedDir)/0Harmony.dll</HarmonyPath>
     <HarmonyPath Condition="'$(HarmonyPath)' == '' and Exists('$(GameRoot)/Mods/0_TFP_Harmony/0Harmony.dll')">$(GameRoot)/Mods/0_TFP_Harmony/0Harmony.dll</HarmonyPath>
