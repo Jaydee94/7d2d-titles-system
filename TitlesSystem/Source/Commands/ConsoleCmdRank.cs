@@ -23,20 +23,23 @@ namespace TitlesSystem.Commands
 
         public override string getDescription()
         {
-            return "Manage and view player ranks in the TitlesSystem. Type 'help rank' for details.";
+            return Localization.Get(
+                "cmd.rank.description",
+                "Manage and view player ranks in the TitlesSystem. Type 'help rank' for details.");
         }
 
         public override string getHelp()
         {
-            return
+            return Localization.Get(
+                "cmd.rank.help",
                 "Usage:\n" +
-                "  rank                       — List all rank tiers and their kill thresholds\n" +
-                "  rank check [name]          — Show a player's current rank and stats (online or offline)\n" +
-                "  rank set <name> <kills>    — Set a player's kill count (admin only, works offline)\n" +
-                "  rank top [n]               — Show top-N online players by kill count (default 10)\n" +
-                "  rank top <start-end>       — Show online leaderboard range (e.g. rank top 4-8)\n" +
-                "  rank top all [n]           — Show top-N all-time players from disk (default 10)\n" +
-                "  rank top all <start-end>   — Show all-time leaderboard range (e.g. rank top all 11-20)\n";
+                "  rank                       - List all rank tiers and their kill thresholds\n" +
+                "  rank check [name]          - Show a player's current rank and stats (online or offline)\n" +
+                "  rank set <name> <kills>    - Set a player's kill count (admin only, works offline)\n" +
+                "  rank top [n]               - Show top-N online players by kill count (default 10)\n" +
+                "  rank top <start-end>       - Show online leaderboard range (e.g. rank top 4-8)\n" +
+                "  rank top all [n]           - Show top-N all-time players from disk (default 10)\n" +
+                "  rank top all <start-end>   - Show all-time leaderboard range (e.g. rank top all 11-20)\n");
         }
 
         public override void Execute(List<string> _params, CommandSenderInfo _senderInfo)
@@ -79,14 +82,14 @@ namespace TitlesSystem.Commands
         private static void CmdListRanks(CommandSenderInfo sender)
         {
             var ranks = RankManager.Instance.Ranks;
-            Output($"=== TitlesSystem — {ranks.Count} Ranks ===", sender);
+            Output(Localization.Format("cmd.rank.list.header", "=== TitlesSystem - {0} Ranks ===", ranks.Count), sender);
             for (int i = 0; i < ranks.Count; i++)
             {
                 var r = ranks[i];
                 string next = (i + 1 < ranks.Count)
-                    ? $"next rank at {ranks[i + 1].KillsRequired} kills"
-                    : "MAX RANK";
-                Output($"#{i + 1} [{r.ShortTitle}] {r.KillsRequired}+ ({next})", sender);
+                    ? Localization.Format("cmd.rank.list.next", "next rank at {0} kills", ranks[i + 1].KillsRequired)
+                    : Localization.Get("cmd.rank.list.max", "MAX RANK");
+                Output(Localization.Format("cmd.rank.list.line", "#{0} [{1}] {2}+ ({3})", i + 1, r.ShortTitle, r.KillsRequired, next), sender);
             }
         }
 
@@ -117,7 +120,7 @@ namespace TitlesSystem.Commands
                     }
                     else
                     {
-                        Output($"[TitlesSystem] Player '{query}' not found (online or offline).", sender);
+                        Output(Localization.Format("cmd.rank.playerNotFound", "[TitlesSystem] Player '{0}' not found (online or offline).", query), sender);
                         return;
                     }
                 }
@@ -127,7 +130,7 @@ namespace TitlesSystem.Commands
                 target = sender.RemoteClientInfo;
                 if (target == null)
                 {
-                    Output("[TitlesSystem] No player specified. Usage: rank check <name>", sender);
+                    Output(Localization.Get("cmd.rank.check.usage", "[TitlesSystem] No player specified. Usage: rank check <name>"), sender);
                     return;
                 }
                 targetId = GameApiCompat.GetPlayerId(target);
@@ -143,7 +146,7 @@ namespace TitlesSystem.Commands
 
             if (data == null)
             {
-                Output($"[TitlesSystem] No rank data found for '{displayName}'. They may not have logged in yet.", sender);
+                Output(Localization.Format("cmd.rank.noData", "[TitlesSystem] No rank data found for '{0}'. They may not have logged in yet.", displayName), sender);
                 return;
             }
 
@@ -156,11 +159,11 @@ namespace TitlesSystem.Commands
             {
                 var next = ranks[data.CurrentRankIndex + 1];
                 int needed = next.KillsRequired - data.ZombieKills;
-                rankProgress = $" | Next: {next.ShortTitle} ({needed} more kills)";
+                rankProgress = Localization.Format("cmd.rank.progress.next", " | Next: {0} ({1} more kills)", next.ShortTitle, needed);
             }
             else
             {
-                rankProgress = " | MAX RANK!";
+                rankProgress = Localization.Get("cmd.rank.progress.max", " | MAX RANK!");
             }
 
             // Calculate stats
@@ -170,14 +173,14 @@ namespace TitlesSystem.Commands
             string playtimeStr = FormatPlaytime(data.PlaytimeSeconds);
 
             // Compact chat-friendly summary.
-            Output($"[TitlesSystem] {data.OriginalName} [{current.ShortTitle}] Rank #{data.CurrentRankIndex + 1}/{ranks.Count}{rankProgress}", sender);
-            Output($"Kills {data.ZombieKills} | Deaths {data.Deaths} | K/D {kdRatio:F2} | Streak {data.CurrentStreak}/{data.BestStreak}", sender);
-            Output($"Play {playtimeStr} | Kills/Day {kpd:F1} | Kills/Hour {kph:F1}", sender);
+            Output(Localization.Format("cmd.rank.summary.header", "[TitlesSystem] {0} [{1}] Rank #{2}/{3}{4}", data.OriginalName, current.ShortTitle, data.CurrentRankIndex + 1, ranks.Count, rankProgress), sender);
+            Output(Localization.Format("cmd.rank.summary.stats1", "Kills {0} | Deaths {1} | K/D {2:F2} | Streak {3}/{4}", data.ZombieKills, data.Deaths, kdRatio, data.CurrentStreak, data.BestStreak), sender);
+            Output(Localization.Format("cmd.rank.summary.stats2", "Play {0} | Kills/Day {1:F1} | Kills/Hour {2:F1}", playtimeStr, kpd, kph), sender);
 
             if (!string.IsNullOrEmpty(data.LastKillTime) && DateTime.TryParse(data.LastKillTime, out var lastKill))
             {
                 TimeSpan timeSinceKill = DateTime.UtcNow - lastKill;
-                Output($"Last kill: {FormatTimeAgo(timeSinceKill)} ago", sender);
+                Output(Localization.Format("cmd.rank.summary.lastKill", "Last kill: {0} ago", FormatTimeAgo(timeSinceKill)), sender);
             }
 
             // Top weapons
@@ -194,7 +197,7 @@ namespace TitlesSystem.Commands
                     parts.Add($"{w.WeaponId}:{w.Kills}");
                 }
 
-                Output($"Top weapons: {string.Join(", ", parts)}", sender);
+                Output(Localization.Format("cmd.rank.summary.topWeapons", "Top weapons: {0}", string.Join(", ", parts)), sender);
             }
         }
 
@@ -202,13 +205,13 @@ namespace TitlesSystem.Commands
         {
             if (!IsAdmin(sender))
             {
-                Output("[TitlesSystem] Permission denied — admin only.", sender);
+                Output(Localization.Get("cmd.rank.set.permissionDenied", "[TitlesSystem] Permission denied - admin only."), sender);
                 return;
             }
 
             if (_params.Count < 3)
             {
-                Output("[TitlesSystem] Usage: rank set <name> <kills>", sender);
+                Output(Localization.Get("cmd.rank.set.usage", "[TitlesSystem] Usage: rank set <name> <kills>"), sender);
                 return;
             }
 
@@ -216,26 +219,26 @@ namespace TitlesSystem.Commands
             string targetId = RankManager.Instance.FindPlayerIdByName(_params[1]);
             if (targetId == null)
             {
-                Output($"[TitlesSystem] Player '{_params[1]}' not found (online or offline).", sender);
+                Output(Localization.Format("cmd.rank.playerNotFound", "[TitlesSystem] Player '{0}' not found (online or offline).", _params[1]), sender);
                 return;
             }
 
             if (!int.TryParse(_params[2], out int kills) || kills < 0)
             {
-                Output("[TitlesSystem] Kill count must be a non-negative integer.", sender);
+                Output(Localization.Get("cmd.rank.set.invalidKills", "[TitlesSystem] Kill count must be a non-negative integer."), sender);
                 return;
             }
 
             if (!RankManager.Instance.SetPlayerKills(targetId, kills))
             {
-                Output($"[TitlesSystem] Could not update kills — player has no rank data loaded.", sender);
+                Output(Localization.Get("cmd.rank.set.noData", "[TitlesSystem] Could not update kills - player has no rank data loaded."), sender);
                 return;
             }
 
             var data = RankManager.Instance.GetPlayerData(targetId);
             var displayName = data?.OriginalName ?? _params[1];
             var rank = RankManager.Instance.Ranks[data.CurrentRankIndex];
-            Output($"[TitlesSystem] Set {displayName}'s kills to {kills} → Rank: [{rank.Title}]", sender);
+            Output(Localization.Format("cmd.rank.set.success", "[TitlesSystem] Set {0}'s kills to {1} -> Rank: [{2}]", displayName, kills, rank.Title), sender);
         }
 
         private static void CmdTopPlayers(List<string> _params, CommandSenderInfo sender)
@@ -291,7 +294,7 @@ namespace TitlesSystem.Commands
                 var allPlayers = RankManager.Instance.GetAllPlayerData();
                 if (allPlayers.Count == 0)
                 {
-                    Output("[TitlesSystem] No player records found.", sender);
+                    Output(Localization.Get("cmd.rank.top.noRecords", "[TitlesSystem] No player records found."), sender);
                     return;
                 }
 
@@ -309,7 +312,7 @@ namespace TitlesSystem.Commands
                 var clientList = ConnectionManager.Instance?.Clients?.list;
                 if (clientList == null || clientList.Count == 0)
                 {
-                    Output("[TitlesSystem] No players currently online. Use 'rank top all' to see all-time leaderboard.", sender);
+                    Output(Localization.Get("cmd.rank.top.noOnline", "[TitlesSystem] No players currently online. Use 'rank top all' to see all-time leaderboard."), sender);
                     return;
                 }
 
@@ -329,7 +332,7 @@ namespace TitlesSystem.Commands
             int maxRank = entries.Count;
             if (maxRank == 0)
             {
-                Output("[TitlesSystem] No leaderboard entries available.", sender);
+                Output(Localization.Get("cmd.rank.top.noEntries", "[TitlesSystem] No leaderboard entries available."), sender);
                 return;
             }
 
@@ -338,17 +341,19 @@ namespace TitlesSystem.Commands
 
             if (displayStart > maxRank)
             {
-                Output($"[TitlesSystem] Requested start rank #{displayStart} is out of range (max #{maxRank}).", sender);
+                Output(Localization.Format("cmd.rank.top.outOfRange", "[TitlesSystem] Requested start rank #{0} is out of range (max #{1}).", displayStart, maxRank), sender);
                 return;
             }
 
-            string scope = showAll ? "All-Time" : "Online";
-            Output($"[TitlesSystem] LB {scope} #{displayStart}-#{endRank}/{maxRank}", sender);
+            string scope = showAll
+                ? Localization.Get("cmd.rank.top.scope.all", "All-Time")
+                : Localization.Get("cmd.rank.top.scope.online", "Online");
+            Output(Localization.Format("cmd.rank.top.header", "[TitlesSystem] LB {0} #{1}-#{2}/{3}", scope, displayStart, endRank, maxRank), sender);
 
             for (int rankIndex = displayStart - 1; rankIndex < endRank; rankIndex++)
             {
                 var (name, kills, title) = entries[rankIndex];
-                Output($"#{rankIndex + 1} {name} [{title}] {kills}", sender);
+                Output(Localization.Format("cmd.rank.top.line", "#{0} {1} [{2}] {3}", rankIndex + 1, name, title, kills), sender);
             }
         }
 
@@ -457,17 +462,17 @@ namespace TitlesSystem.Commands
         /// </summary>
         private static string FormatPlaytime(long seconds)
         {
-            if (seconds < 0) return "0m";
+            if (seconds < 0) return Localization.Get("time.play.zero", "0m");
 
             long days = seconds / 86400;
             long hours = (seconds % 86400) / 3600;
             long minutes = (seconds % 3600) / 60;
 
             if (days > 0)
-                return $"{days}d {hours}h {minutes}m";
+                return Localization.Format("time.play.days", "{0}d {1}h {2}m", days, hours, minutes);
             if (hours > 0)
-                return $"{hours}h {minutes}m";
-            return $"{minutes}m";
+                return Localization.Format("time.play.hours", "{0}h {1}m", hours, minutes);
+            return Localization.Format("time.play.minutes", "{0}m", minutes);
         }
 
         /// <summary>
@@ -476,12 +481,12 @@ namespace TitlesSystem.Commands
         private static string FormatTimeAgo(TimeSpan ts)
         {
             if (ts.TotalSeconds < 60)
-                return $"{(int)ts.TotalSeconds} seconds";
+                return Localization.Format("time.ago.seconds", "{0} seconds", (int)ts.TotalSeconds);
             if (ts.TotalMinutes < 60)
-                return $"{(int)ts.TotalMinutes} minute(s)";
+                return Localization.Format("time.ago.minutes", "{0} minute(s)", (int)ts.TotalMinutes);
             if (ts.TotalHours < 24)
-                return $"{(int)ts.TotalHours} hour(s)";
-            return $"{(int)ts.TotalDays} day(s)";
+                return Localization.Format("time.ago.hours", "{0} hour(s)", (int)ts.TotalHours);
+            return Localization.Format("time.ago.days", "{0} day(s)", (int)ts.TotalDays);
         }
     }
 }

@@ -151,7 +151,7 @@ echo "--- Building TitlesSystem ---"
 STAGING="$(mktemp -d)/TitlesSystem"
 mkdir -p "$STAGING/Config"
 cp "$MOD_DIR/ModInfo.xml"                  "$STAGING/"
-cp "$MOD_DIR/Config/TitlesRanks.xml"       "$STAGING/Config/"
+cp -r "$MOD_DIR/Config/."                  "$STAGING/Config/"
 cp "$MOD_DIR/bin/Release/TitlesSystem.dll" "$STAGING/"
 
 ASSET="TitlesSystem-v${MOD_VERSION}.zip"

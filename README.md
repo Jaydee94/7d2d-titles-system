@@ -56,6 +56,35 @@ To add, remove, or rename ranks, edit the `<Ranks>` section. Ranks must be order
 </Ranks>
 ```
 
+## Localization
+
+Player-facing chat and command text can be translated through `Config/Localization.txt`.
+
+- The file uses `key=value` pairs.
+- Lines starting with `#` are comments.
+- Changes take effect after a server restart.
+- Missing keys automatically fall back to built-in English defaults.
+
+Example:
+
+```text
+common.unknown=Unknown
+rankup.announce=[TitlesSystem] {0} has been promoted to [{1}]! ({2} zombies slain)
+cmd.rank.set.permissionDenied=[TitlesSystem] Permission denied - admin only.
+```
+
+Placeholder notes:
+
+- Keep numbered placeholders like `{0}`, `{1}`, `{2}` intact.
+- You can reorder placeholders if needed for grammar in your language.
+- Keep `\n` when present if you want line breaks in help text.
+
+Suggested community workflow:
+
+1. Copy `Localization.txt` and translate values only.
+2. Leave keys unchanged.
+3. Share translated files for languages such as German, Russian, and French.
+
 ## Ranks
 
 | # | Short Title | Title | Kills Required |
@@ -144,7 +173,8 @@ TitlesSystem/
 ├── ModInfo.xml
 ├── TitlesSystem.dll
 └── Config/
-    └── TitlesRanks.xml
+    ├── TitlesRanks.xml
+    └── Localization.txt
 ```
 
 ## License

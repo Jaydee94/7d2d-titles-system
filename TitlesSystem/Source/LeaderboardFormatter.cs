@@ -9,9 +9,9 @@ namespace TitlesSystem
         public LeaderboardEntry(string playerId, string playerName, int zombieKills, string rankShortTitle)
         {
             PlayerId = playerId ?? string.Empty;
-            PlayerName = playerName ?? "Unknown";
+            PlayerName = playerName ?? Localization.Get("common.unknown", "Unknown");
             ZombieKills = zombieKills;
-            RankShortTitle = rankShortTitle ?? "Unknown";
+            RankShortTitle = rankShortTitle ?? Localization.Get("common.unknown", "Unknown");
         }
 
         public string PlayerId { get; }
@@ -50,16 +50,26 @@ namespace TitlesSystem
             {
                 LeaderboardEntry entry = topEntries[i];
                 string compactName = CompactName(entry.PlayerName, 12);
-                parts.Add($"#{i + 1} {compactName}[{entry.RankShortTitle}] {entry.ZombieKills}");
+                parts.Add(Localization.Format(
+                    "leaderboard.format.line",
+                    "#{0} {1}[{2}] {3}",
+                    i + 1,
+                    compactName,
+                    entry.RankShortTitle,
+                    entry.ZombieKills));
             }
 
-            return $"[TitlesSystem] Live Top {topEntries.Count}: {string.Join(" | ", parts)}";
+            return Localization.Format(
+                "leaderboard.format.compact",
+                "[TitlesSystem] Live Top {0}: {1}",
+                topEntries.Count,
+                string.Join(" | ", parts));
         }
 
         private static string CompactName(string value, int maxLength)
         {
             if (string.IsNullOrWhiteSpace(value))
-                return "Unknown";
+                return Localization.Get("common.unknown", "Unknown");
 
             string trimmed = value.Trim();
             if (trimmed.Length <= maxLength)

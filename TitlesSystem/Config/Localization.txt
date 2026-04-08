@@ -1,0 +1,59 @@
+# TitlesSystem localization file
+# Format: key=value
+# Supports escapes: \n, \r, \t
+
+common.unknown=Unknown
+
+rankup.announce=[TitlesSystem] {0} has been promoted to [{1}]! ({2} zombies slain)
+
+leaderboard.header=[TitlesSystem] Leaderboard Top {0}
+leaderboard.line=#{0} {1} [{2}] {3}
+leaderboard.format.line=#{0} {1}[{2}] {3}
+leaderboard.format.compact=[TitlesSystem] Live Top {0}: {1}
+
+cmd.rank.description=Manage and view player ranks in the TitlesSystem. Type 'help rank' for details.
+cmd.rank.help=Usage:\n  rank                       - List all rank tiers and their kill thresholds\n  rank check [name]          - Show a player's current rank and stats (online or offline)\n  rank set <name> <kills>    - Set a player's kill count (admin only, works offline)\n  rank top [n]               - Show top-N online players by kill count (default 10)\n  rank top <start-end>       - Show online leaderboard range (e.g. rank top 4-8)\n  rank top all [n]           - Show top-N all-time players from disk (default 10)\n  rank top all <start-end>   - Show all-time leaderboard range (e.g. rank top all 11-20)\n
+cmd.rank.list.header==== TitlesSystem - {0} Ranks ===
+cmd.rank.list.next=next rank at {0} kills
+cmd.rank.list.max=MAX RANK
+cmd.rank.list.line=#{0} [{1}] {2}+ ({3})
+
+cmd.rank.playerNotFound=[TitlesSystem] Player '{0}' not found (online or offline).
+cmd.rank.check.usage=[TitlesSystem] No player specified. Usage: rank check <name>
+cmd.rank.noData=[TitlesSystem] No rank data found for '{0}'. They may not have logged in yet.
+
+cmd.rank.progress.next= | Next: {0} ({1} more kills)
+cmd.rank.progress.max= | MAX RANK!
+
+cmd.rank.summary.header=[TitlesSystem] {0} [{1}] Rank #{2}/{3}{4}
+cmd.rank.summary.stats1=Kills {0} | Deaths {1} | K/D {2:F2} | Streak {3}/{4}
+cmd.rank.summary.stats2=Play {0} | Kills/Day {1:F1} | Kills/Hour {2:F1}
+cmd.rank.summary.lastKill=Last kill: {0} ago
+cmd.rank.summary.topWeapons=Top weapons: {0}
+
+cmd.rank.set.permissionDenied=[TitlesSystem] Permission denied - admin only.
+cmd.rank.set.usage=[TitlesSystem] Usage: rank set <name> <kills>
+cmd.rank.set.invalidKills=[TitlesSystem] Kill count must be a non-negative integer.
+cmd.rank.set.noData=[TitlesSystem] Could not update kills - player has no rank data loaded.
+cmd.rank.set.success=[TitlesSystem] Set {0}'s kills to {1} -> Rank: [{2}]
+
+cmd.rank.top.noRecords=[TitlesSystem] No player records found.
+cmd.rank.top.noOnline=[TitlesSystem] No players currently online. Use 'rank top all' to see all-time leaderboard.
+cmd.rank.top.noEntries=[TitlesSystem] No leaderboard entries available.
+cmd.rank.top.outOfRange=[TitlesSystem] Requested start rank #{0} is out of range (max #{1}).
+cmd.rank.top.scope.all=All-Time
+cmd.rank.top.scope.online=Online
+cmd.rank.top.header=[TitlesSystem] LB {0} #{1}-#{2}/{3}
+cmd.rank.top.line=#{0} {1} [{2}] {3}
+
+time.play.zero=0m
+time.play.days={0}d {1}h {2}m
+time.play.hours={0}h {1}m
+time.play.minutes={0}m
+
+time.ago.seconds={0} seconds
+time.ago.minutes={0} minute(s)
+time.ago.hours={0} hour(s)
+time.ago.days={0} day(s)
+
+chat.command.failed=[TitlesSystem] Command failed. Check server logs.

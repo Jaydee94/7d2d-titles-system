@@ -24,6 +24,7 @@
   <ItemGroup>
     <Compile Include="../TitlesSystem/Source/ChatHelper.cs" />
     <Compile Include="../TitlesSystem/Source/LeaderboardFormatter.cs" />
+    <Compile Include="../TitlesSystem/Source/Localization.cs" />
     <Compile Include="../TitlesSystem/Source/RankCalculator.cs" />
     <Compile Include="../TitlesSystem/Source/RankDefinition.cs" />
     <Compile Include="../TitlesSystem/Source/PlayerRankData.cs" />
