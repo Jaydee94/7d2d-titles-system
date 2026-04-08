@@ -31,8 +31,21 @@ Edit `Config/TitlesRanks.xml` to customise settings and ranks. Changes take effe
     <ShowLeaderboardOnLogin value="true"/>
     <ShowLeaderboardIntervalHours value="6"/>
     <LeaderboardTopPlayers value="10"/>
+    <AnnouncementColor value="FFD700"/>
+    <LeaderboardColor value="00BFFF"/>
 </Settings>
 ```
+
+| Setting | Default | Description |
+|---------|---------|-------------|
+| `ShowRankInName` | `true` | Display the short rank title in brackets above the player's name in-game |
+| `AnnounceRankUp` | `true` | Broadcast a global server announcement when a player ranks up |
+| `AutoSaveIntervalMinutes` | `5` | Save player rank data to disk every N minutes (`0` = only on disconnect/event) |
+| `ShowLeaderboardOnLogin` | `true` | Show leaderboard in global chat when a player logs in |
+| `ShowLeaderboardIntervalHours` | `6` | Show leaderboard in global chat every N hours (`0` = disabled) |
+| `LeaderboardTopPlayers` | `10` | Number of top players to display in the leaderboard (max 50) |
+| `AnnouncementColor` | `FFD700` | Chat color for rank-up announcements, as a 6-digit RRGGBB hex string. Set to empty to disable coloring. |
+| `LeaderboardColor` | `00BFFF` | Chat color for leaderboard messages, as a 6-digit RRGGBB hex string. Set to empty to disable coloring. |
 
 To add, remove, or rename ranks, edit the `<Ranks>` section. Ranks must be ordered by ascending kills:
 
