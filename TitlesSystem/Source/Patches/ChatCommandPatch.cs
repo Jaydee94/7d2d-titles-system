@@ -86,7 +86,9 @@ namespace TitlesSystem.Patches
             catch (Exception e)
             {
                 Log.Error($"[TitlesSystem] ChatCommandPatch error: {e.Message}");
-                GameApiCompat.ChatMessageToClient(cInfo, "[TitlesSystem] Command failed. Check server logs.");
+                GameApiCompat.ChatMessageToClient(
+                    cInfo,
+                    Localization.Get("chat.command.failed", "[TitlesSystem] Command failed. Check server logs."));
             }
 
             // Command handled: suppress the raw command text from global chat.

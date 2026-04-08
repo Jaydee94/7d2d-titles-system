@@ -39,6 +39,8 @@ namespace TitlesSystem
         private int _showLeaderboardIntervalHours = 6;
         private int _leaderboardTopPlayers = 10;
         private DateTime _lastLeaderboardTime = DateTime.MinValue;
+        private string _announcementColor = "FFD700";
+        private string _leaderboardColor = "00BFFF";
 
         private static readonly XmlSerializer PlayerDataSerializer =
             new XmlSerializer(typeof(PlayerRankData));
@@ -52,6 +54,7 @@ namespace TitlesSystem
         /// </summary>
         public void Initialize(string modConfigPath)
         {
+            Localization.Load(Path.Combine(modConfigPath, "Config", "Localization.txt"));
             LoadRankConfig(modConfigPath);
             Log.Out($"[TitlesSystem] RankManager initialized with {_ranks.Count} ranks.");
         }
@@ -134,6 +137,14 @@ namespace TitlesSystem
             if (leaderboardTopNode?.Attributes?["value"] != null)
                 int.TryParse(leaderboardTopNode.Attributes["value"].Value, out _leaderboardTopPlayers);
 
+            XmlNode announcementColorNode = doc.SelectSingleNode("/TitlesConfig/Settings/AnnouncementColor");
+            if (announcementColorNode?.Attributes?["value"] != null)
+                _announcementColor = announcementColorNode.Attributes["value"].Value ?? string.Empty;
+
+            XmlNode leaderboardColorNode = doc.SelectSingleNode("/TitlesConfig/Settings/LeaderboardColor");
+            if (leaderboardColorNode?.Attributes?["value"] != null)
+                _leaderboardColor = leaderboardColorNode.Attributes["value"].Value ?? string.Empty;
+
             // Read ranks
             _ranks.Clear();
             XmlNodeList rankNodes = doc.SelectNodes("/TitlesConfig/Ranks/Rank");
@@ -145,7 +156,7 @@ namespace TitlesSystem
 
                 int kills = 0;
                 int.TryParse(node.Attributes["kills"]?.Value, out kills);
-                string title = node.Attributes["title"]?.Value ?? "Unknown";
+                string title = node.Attributes["title"]?.Value ?? Localization.Get("common.unknown", "Unknown");
                 string shortTitle = node.Attributes["shortTitle"]?.Value ?? "???";
 
                 _ranks.Add(new RankDefinition(kills, title, shortTitle));
@@ -308,8 +319,13 @@ namespace TitlesSystem
 
                 if (_announceRankUp)
                 {
-                    string message = $"[TitlesSystem] {data.OriginalName} has been promoted to [{newRank.Title}]! ({data.ZombieKills} zombies slain)";
-                    GameApiCompat.ChatMessageGlobal(message);
+                    string message = Localization.Format(
+                        "rankup.announce",
+                        "[TitlesSystem] {0} has been promoted to [{1}]! ({2} zombies slain)",
+                        data.OriginalName,
+                        newRank.Title,
+                        data.ZombieKills);
+                    GameApiCompat.ChatMessageGlobal(ColorizeMessage(message, _announcementColor));
                 }
             }
 
@@ -352,7 +368,10 @@ namespace TitlesSystem
                     // Build compact one-line header for small chat windows.
                     List<string> leaderboardLines = new List<string>
                     {
-                        $"[TitlesSystem] Leaderboard Top {topPlayers.Count}"
+                        Localization.Format(
+                            "leaderboard.header",
+                            "[TitlesSystem] Leaderboard Top {0}",
+                            topPlayers.Count)
                     };
 
                     // Add player lines
@@ -362,8 +381,14 @@ namespace TitlesSystem
                         string rank =
                             player.CurrentRankIndex >= 0 && player.CurrentRankIndex < _ranks.Count
                                 ? _ranks[player.CurrentRankIndex].ShortTitle
-                                : "Unknown";
-                        string line = $"#{position} {player.OriginalName} [{rank}] {player.ZombieKills}";
+                                : Localization.Get("common.unknown", "Unknown");
+                        string line = Localization.Format(
+                            "leaderboard.line",
+                            "#{0} {1} [{2}] {3}",
+                            position,
+                            player.OriginalName,
+                            rank,
+                            player.ZombieKills);
                         leaderboardLines.Add(line);
                         position++;
                     }
@@ -371,7 +396,7 @@ namespace TitlesSystem
                     // Broadcast each line to all players
                     foreach (var line in leaderboardLines)
                     {
-                        GameApiCompat.ChatMessageGlobal(line);
+                        GameApiCompat.ChatMessageGlobal(ColorizeMessage(line, _leaderboardColor));
                     }
 
                     Log.Out($"[TitlesSystem] Leaderboard broadcast to all players.");
@@ -414,8 +439,13 @@ namespace TitlesSystem
 
                 if (_announceRankUp)
                 {
-                    string message = $"[TitlesSystem] {data.OriginalName} has been promoted to [{newRank.Title}]! ({data.ZombieKills} zombies slain)";
-                    GameApiCompat.ChatMessageGlobal(message);
+                    string message = Localization.Format(
+                        "rankup.announce",
+                        "[TitlesSystem] {0} has been promoted to [{1}]! ({2} zombies slain)",
+                        data.OriginalName,
+                        newRank.Title,
+                        data.ZombieKills);
+                    GameApiCompat.ChatMessageGlobal(ColorizeMessage(message, _announcementColor));
                 }
             }
 
@@ -433,6 +463,14 @@ namespace TitlesSystem
 
         private int ComputeRankIndex(int kills) =>
             RankCalculator.ComputeRankIndex(_ranks, kills);
+
+        /// <summary>
+        /// Wraps <paramref name="message"/> in 7DTD BBCode color tags when
+        /// <paramref name="colorHex"/> is a valid 6-character hex string.
+        /// Returns the original message unchanged if the color is empty or invalid.
+        /// </summary>
+        internal static string ColorizeMessage(string message, string colorHex) =>
+            ChatHelper.ColorizeMessage(message, colorHex);
 
         /// <summary>
         /// Modifies the EntityPlayer's entityName to "[ShortTitle] OriginalName"
@@ -484,7 +522,9 @@ namespace TitlesSystem
             }
             catch { /* fall through to clientInfo fallback */ }
 
-            return !string.IsNullOrEmpty(clientInfo.playerName) ? clientInfo.playerName : "Unknown";
+            return !string.IsNullOrEmpty(clientInfo.playerName)
+                ? clientInfo.playerName
+                : Localization.Get("common.unknown", "Unknown");
         }
 
         private static ClientInfo GetClientInfo(string playerId)

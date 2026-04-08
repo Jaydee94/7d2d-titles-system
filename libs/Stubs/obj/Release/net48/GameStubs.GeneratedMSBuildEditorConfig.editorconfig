@@ -1,0 +1,5 @@
+is_global = true
+build_property.RootNamespace = GameStubs
+build_property.ProjectDir = \\wsl.localhost\Ubuntu\home\jaydee\git\7d2d-titles-system\libs\Stubs\
+build_property.EnableComHosting = 
+build_property.EnableGeneratedComInterfaceComImportInterop = 

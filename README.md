@@ -31,8 +31,21 @@ Edit `Config/TitlesRanks.xml` to customise settings and ranks. Changes take effe
     <ShowLeaderboardOnLogin value="true"/>
     <ShowLeaderboardIntervalHours value="6"/>
     <LeaderboardTopPlayers value="10"/>
+    <AnnouncementColor value="FFD700"/>
+    <LeaderboardColor value="00BFFF"/>
 </Settings>
 ```
+
+| Setting | Default | Description |
+|---------|---------|-------------|
+| `ShowRankInName` | `true` | Display the short rank title in brackets above the player's name in-game |
+| `AnnounceRankUp` | `true` | Broadcast a global server announcement when a player ranks up |
+| `AutoSaveIntervalMinutes` | `5` | Save player rank data to disk every N minutes (`0` = only on disconnect/event) |
+| `ShowLeaderboardOnLogin` | `true` | Show leaderboard in global chat when a player logs in |
+| `ShowLeaderboardIntervalHours` | `6` | Show leaderboard in global chat every N hours (`0` = disabled) |
+| `LeaderboardTopPlayers` | `10` | Number of top players to display in the leaderboard (max 50) |
+| `AnnouncementColor` | `FFD700` | Chat color for rank-up announcements, as a 6-digit RRGGBB hex string. Set to empty to disable coloring. |
+| `LeaderboardColor` | `00BFFF` | Chat color for leaderboard messages, as a 6-digit RRGGBB hex string. Set to empty to disable coloring. |
 
 To add, remove, or rename ranks, edit the `<Ranks>` section. Ranks must be ordered by ascending kills:
 
@@ -42,6 +55,35 @@ To add, remove, or rename ranks, edit the `<Ranks>` section. Ranks must be order
     <Rank kills="100" title="Another Rank"      shortTitle="Another"/>
 </Ranks>
 ```
+
+## Localization
+
+Player-facing chat and command text can be translated through `Config/Localization.txt`.
+
+- The file uses `key=value` pairs.
+- Lines starting with `#` are comments.
+- Changes take effect after a server restart.
+- Missing keys automatically fall back to built-in English defaults.
+
+Example:
+
+```text
+common.unknown=Unknown
+rankup.announce=[TitlesSystem] {0} has been promoted to [{1}]! ({2} zombies slain)
+cmd.rank.set.permissionDenied=[TitlesSystem] Permission denied - admin only.
+```
+
+Placeholder notes:
+
+- Keep numbered placeholders like `{0}`, `{1}`, `{2}` intact.
+- You can reorder placeholders if needed for grammar in your language.
+- Keep `\n` when present if you want line breaks in help text.
+
+Suggested community workflow:
+
+1. Copy `Localization.txt` and translate values only.
+2. Leave keys unchanged.
+3. Share translated files for languages such as German, Russian, and French.
 
 ## Ranks
 
@@ -131,7 +173,8 @@ TitlesSystem/
 ├── ModInfo.xml
 ├── TitlesSystem.dll
 └── Config/
-    └── TitlesRanks.xml
+    ├── TitlesRanks.xml
+    └── Localization.txt
 ```
 
 ## License

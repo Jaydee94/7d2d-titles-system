@@ -163,8 +163,8 @@ if (Test-Path $DllSource) {
 }
 
 Copy-Item (Join-Path $ModDir "ModInfo.xml")              -Destination $ModDest  -Force
-Copy-Item (Join-Path $ModDir "Config\TitlesRanks.xml")   -Destination $ConfigDest -Force
-Write-Host "[TitlesSystem] Deployed ModInfo.xml and Config\TitlesRanks.xml" -ForegroundColor Green
+Copy-Item (Join-Path $ModDir "Config\*")                 -Destination $ConfigDest -Recurse -Force
+Write-Host "[TitlesSystem] Deployed ModInfo.xml and Config\ (including localization)" -ForegroundColor Green
 
 Write-Host ""
 Write-Host "=== Deploy complete! ===" -ForegroundColor Cyan
